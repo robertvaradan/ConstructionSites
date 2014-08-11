@@ -1,4 +1,4 @@
 ConstructionSites
 =================
 
-ConstructionSites' Bukkit Repository.
+http://dev.bukkit.org/bukkit-plugins/constructionsites/
