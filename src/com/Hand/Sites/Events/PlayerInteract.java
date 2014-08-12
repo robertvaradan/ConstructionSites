@@ -14,6 +14,7 @@ import com.sk89q.worldedit.FilenameException;
 import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.data.DataException;
+import com.sk89q.worldguard.bukkit.BukkitUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
@@ -50,28 +51,43 @@ public class PlayerInteract implements Listener
                     boolean Continue = true;
                     double cost = 0;
                     try{cost = Double.parseDouble(sign.getLine(2).replace("§b$", ""));}
-                    catch(NumberFormatException nfe){p.sendMessage(Prefix + "§4CRITICAL ERROR: §cYour admin did not set up the price correctl! Report this to him immediately."); Continue = false;}
+                    catch(NumberFormatException nfe){p.sendMessage(Prefix + "§4CRITICAL ERROR: §cYour admin did not set up the price correctly! Report this to him immediately."); Continue = false;}
                             
                     if(sign.getLine(1).equals("§aCompleted") && Continue)
                     {
                         if(Main.economy.getBalance((OfflinePlayer) p) >= cost)
                         {
-                            Main.economy.withdrawPlayer(p, cost);
-                            p.sendMessage(Prefix + "§eBuild cost: $" + cost + ". Returned: " + cost * Prefs.ac + ". "
-                                    + "Total due: §e$" + (cost - cost * Prefs.ac) + "§e.");
-                            sign.getBlock().breakNaturally();
-                            p.sendMessage("Message: " + sign.getLine(3).replace("§3", ""));
-                            sign.getLocation().getWorld().playSound(sign.getLocation(), Sound.DIG_WOOD, 3, 1);
                             
                             File file = new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + sign.getLine(3).replace("§3", "") + ".schematic");
                             //Vector vector = new Vector(p.getLocation().getBlockX(), p.getLocation().getBlockY(), p.getLocation().getBlockZ());
                                 try {
                                     WorldEditPlugin wep = (WorldEditPlugin)Bukkit.getPluginManager().getPlugin("WorldEdit");
-                                    TerrainManager tm = new TerrainManager(wep, p);
-                                    tm.loadSchematic(file, p.getLocation(), p, (int) TerrainManager.getFaceYaw(event.getBlockFace()));
-                                    p.sendMessage("FACEYAW: " + TerrainManager.getFaceYaw(event.getBlockFace()));
-                                    BuildSounds.playBuildSound(BuildSound.SITE_BUILT, p.getLocation());
-                                } catch (FilenameException | DataException | IOException | MaxChangedBlocksException | EmptyClipboardException ex) {
+                                    TerrainManager testtm = new TerrainManager(wep, p);
+                                    boolean test = testtm.testLoadSchematic(file, p.getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(p).getOppositeFace()), false);
+                                        if(test)
+                                        {
+                                        TerrainManager tm = new TerrainManager(wep, p);
+                                        boolean loadschematic = tm.loadSchematic(file, p.getLocation(), p, (int) TerrainManager.getFaceYaw(event.getBlockFace()));
+
+                                        if(loadschematic)
+                                        {
+                                        Main.economy.withdrawPlayer(p, cost);
+                                        p.sendMessage(Prefix + "§eBuild cost: $" + cost + ". Returned: " + cost * Prefs.ac + ". "
+                                                + "Total due: §e$" + (cost - cost * Prefs.ac) + "§e.");
+                                        p.sendMessage(Prefix + "§aBuilding created.");
+                                        Main.economy.withdrawPlayer(p, cost);
+                                        event.getClickedBlock().breakNaturally();
+                                        BuildSounds.playBuildSound(BuildSounds.BuildSound.SITE_BUILT, p.getLocation());
+
+                                        BukkitUtil.findFreePosition(p);
+
+                                        sign.getBlock().breakNaturally();
+                                        sign.getLocation().getWorld().playSound(sign.getLocation(), Sound.DIG_WOOD, 3, 1);
+
+                                        BuildSounds.playBuildSound(BuildSound.SITE_BUILT, p.getLocation());                                        
+                                        }
+                                    }
+                                    } catch (FilenameException | DataException | IOException | MaxChangedBlocksException | EmptyClipboardException ex) {
                                     Logger.getLogger(ConstructCmd.class.getName()).log(Level.SEVERE, null, ex);
                                 }
                             BuildSounds.playBuildSound(BuildSound.SITE_BUILT, p.getLocation());

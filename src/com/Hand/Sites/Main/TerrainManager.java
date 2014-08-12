@@ -16,13 +16,13 @@ import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.data.DataException;
 import com.sk89q.worldedit.schematic.SchematicFormat;
-import com.sk89q.worldguard.bukkit.BukkitUtil;
 import java.io.File;
 import java.io.IOException;
+import org.bukkit.Effect;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.BlockFace;
-import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 
 /**
@@ -118,7 +118,7 @@ public class TerrainManager {
                 localSession.getClipboard().rotate2D((int) rotation);
                 
                 
-                p.sendMessage("DEBUG ROTATION: " + rotation);
+                //p.sendMessage("DEBUG ROTATION: " + rotation);
                 localSession.getClipboard().setOffset(new Vector(0, localSession.getClipboard().getHeight() / 2, 0));
                 localSession.getClipboard().setOrigin(new Vector(loc.getBlockX(), loc.getBlockY() / 2, loc.getBlockZ()));
                 
@@ -136,7 +136,10 @@ public class TerrainManager {
                         {
                                 p.sendMessage(Prefix + "§4ERROR: §6Could not create construction site. It overlaps a region you can't build in.");
                                 resolved = true;
-                                loc.getBlock().breakNaturally();
+                                if(loc.getBlock().getType() == Material.SIGN || loc.getBlock().getType() == Material.SIGN_POST || loc.getBlock().getType() == Material.WALL_SIGN)
+                                {
+                                    loc.getBlock().breakNaturally();
+                                }
                                 return false;
                         }
                         
@@ -145,16 +148,6 @@ public class TerrainManager {
                     if(!resolved)
                     {
                         localSession.getClipboard().place(editSession, new Vector(loc.getBlockX() - (localSession.getClipboard().getWidth() / 2), loc.getBlockY(), (loc.getBlockZ() - localSession.getClipboard().getWidth() / 2)), true);
-                        p.sendMessage(Prefix + "§aBuilding created.");
-                        resolved = true;
-                        double cost = Double.parseDouble(((Sign) loc.getBlock().getState()).getLine(2).replace("§3", ""));
-                        Main.economy.withdrawPlayer(p, cost);
-                        p.sendMessage(Prefix + "§eBuild cost: $" + cost + ". Returned: " + cost * Prefs.ac + ". "
-                                + "Total due: §e$" + (cost - cost * Prefs.ac) + "§e.");
-                        loc.getBlock().breakNaturally();
-                        BuildSounds.playBuildSound(BuildSounds.BuildSound.SITE_BUILT, p.getLocation());
-                        
-                        BukkitUtil.findFreePosition(p);
                     }
 
                     editSession.flushQueue();
@@ -206,7 +199,7 @@ public class TerrainManager {
  
         BlockFace dir;
      
-        float y = player.getLocation().getYaw() + 90; // Offset since we're just using this for signs.
+        float y = player.getLocation().getYaw() + 90; // Offset since we're just using this for signs, and signs have weeeeird rotations. :I
      
         if( y < 0 ){y += 360;}
      
@@ -240,4 +233,79 @@ public class TerrainManager {
  
     }
 
+    public boolean testLoadSchematic(File saveFile, Location loc, Player p, int rotation, boolean placetest) throws FilenameException, DataException, IOException, MaxChangedBlocksException, EmptyClipboardException 
+    {
+            saveFile = we.getSafeSaveFile(localPlayer,
+                       saveFile.getParentFile(), saveFile.getName(),
+                       EXTENSION, 
+                       new String[] { EXTENSION });
+
+            editSession.enableQueue();
+            localSession.setClipboard(SchematicFormat.MCEDIT.load(saveFile));
+            boolean resolved = false;
+            localSession.getClipboard().rotate2D((int) rotation);
+
+
+            //p.sendMessage("DEBUG ROTATION: " + rotation);
+            localSession.getClipboard().setOffset(new Vector(0, localSession.getClipboard().getHeight() / 2, 0));
+            localSession.getClipboard().setOrigin(new Vector(loc.getBlockX(), loc.getBlockY() / 2, loc.getBlockZ()));
+
+                int x = (localSession.getClipboard().getWidth() + 1) / 2;
+                int y = (localSession.getClipboard().getHeight() + 1) / 2;
+                int z = (localSession.getClipboard().getLength() + 1) / 2;
+                
+                int use = x;
+                
+                if(y > x && y > z)
+                {
+                    use = y;
+                }
+                
+                if(z > y && z > x)
+                {
+                    use = z;
+                }
+                        
+                        
+
+                for(Location newloc : scanForArea(loc.getBlock().getLocation(), use, use / 2, use,
+                        Prefs.bsox + localSession.getClipboard().getOffset().getBlockX(),
+                        Prefs.bsoy + localSession.getClipboard().getOffset().getBlockY(),
+                        Prefs.bsoz + localSession.getClipboard().getOffset().getBlockZ()))
+                {
+                    //p.sendMessage("§7DEBUG: §aScanning area: §6" + loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ() + ".");
+                    if(!locationCanBuild(newloc, p) && !resolved)
+                    {
+                            p.sendMessage(Prefix + "§4ERROR: §6Could not create construction site. It overlaps a region you can't build in.");
+                            resolved = true;
+                            
+                            return false;
+                    }
+                    
+                    if(placetest)
+                    {
+                        if(locationCanBuild(newloc, p))
+                        {
+                            p.playEffect(newloc, Effect.SMOKE, 0);
+                        }
+                    }
+                    
+                        /*Bukkit.getScheduler().scheduleSyncDelayedTask(Main.ConstructionSites, new Runnable()
+                        {
+                            @Override
+                            public void run()
+                            {
+                                
+                            }
+                        }, 20);*/
+
+                    
+
+                }
+
+                editSession.flushQueue();
+
+            we.flushBlockBag(localPlayer, editSession);
+            return true;
+    }
 }

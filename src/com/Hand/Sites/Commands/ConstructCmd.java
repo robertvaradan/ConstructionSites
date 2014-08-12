@@ -134,62 +134,73 @@ public class ConstructCmd implements CommandExecutor
                             
                             //p.sendMessage("Is there such a path? " + plugin.getConfig().contains("BuildSites." + args[1].toLowerCase() + ".Time"));
                             
-                            if("0:0:0".equals(plugin.getConfig().getString("CS." + args[1].toLowerCase() + ".Time")))
+                            if(!"0:0:0".equals(plugin.getConfig().getString("CS." + args[1].toLowerCase() + ".Time")))
                             {
-                            Block b = p.getLocation().getBlock();
-                            b.setType(Material.SIGN_POST);
-                            Sign s = (Sign) b.getState();
-                            //((Directional)b.getState().getData()).setFacingDirection(getFaceFromFloat(p.getLocation().getYaw(), true));
-                            //p.sendMessage("Yaw: " + p.getLocation().getYaw() + "SignFaceDir: " + ((Directional)b.getState().getData()).getFacing());
-                            //Date now = new Date(currenttime);
-                            //Date then = new Date(currenttime + buildtime);
-                            //now.getTime() returns the Unix-Timestamp.
+                                try {
+                                    WorldEditPlugin wep = (WorldEditPlugin)Bukkit.getPluginManager().getPlugin("WorldEdit");
+                                    TerrainManager tm = new TerrainManager(wep, p);
+                                        p.sendMessage(Prefix + "§aChecking buil permissions...");
+                                        boolean test = tm.testLoadSchematic(new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + args[1].toLowerCase() + ".schematic"), p.getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(p).getOppositeFace()), true);
+                                        if(test)
+                                        {
+                                        Block b = p.getLocation().getBlock();
+                                        b.setType(Material.SIGN_POST);
+                                        Sign s = (Sign) b.getState();
+                                        //((Directional)b.getState().getData()).setFacingDirection(getFaceFromFloat(p.getLocation().getYaw(), true));
+                                        //p.sendMessage("Yaw: " + p.getLocation().getYaw() + "SignFaceDir: " + ((Directional)b.getState().getData()).getFacing());
+                                        //Date now = new Date(currenttime);
+                                        //Date then = new Date(currenttime + buildtime);
+                                        //now.getTime() returns the Unix-Timestamp.
 
-                            //format the output to "24-01-2012 15:19:45"
-                            //SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+                                        //format the output to "24-01-2012 15:19:45"
+                                        //SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
-                            //String form = format.format(then);
-                            String strang = CSTime.getMsgsafeTime(buildtime);
-                            if(strang.endsWith(" "))
-                            {
-                                strang = strang.substring(0, (strang.length() - 1));
-                            }
-                            
-                            p.sendMessage(Main.Prefix + "§eSite built. Your building will be completed in §a" + strang + ". §eThe total building cost will be §a$" + cost + ".");
-                                if(b.getType() == Material.SIGN_POST)
-                                {
-                                    //String[] split = form.split(" ");
-                                    //p.sendMessage("It was indeed a sign! :o");
-                                    s.setLine(0, "§1[Construct]");
-                                    s.setLine(1, "§b" + buildtime.replace("‘", "").replace("’", "").replace("\'", ""));
-                                    s.setLine(2, "§b$" + cost);
-                                    s.setLine(3, "§3" + args[1].trim());
-                                    org.bukkit.material.Sign matSign = new org.bukkit.material.Sign(Material.SIGN_POST);
-                                    matSign.setFacingDirection(TerrainManager.getPlayerDirection(p)); // TODO ...
-                                    s.setData(matSign);
-                                    s.update();
-                                    p.sendMessage(Prefix + "§6An advance of §a$" + cost / Prefs.ac + " §6has been taken from your account."); 
-                                    p.sendMessage(Prefix +"This cost will be returned upon the building's completion.");
-                                    signCountDown(b.getLocation());
-                                    Location loc = s.getLocation();
-                                    
-                                    List<String> processes = (List<String>) plugin.getConfig().getList("Processes");
+                                        //String form = format.format(then);
+                                        String strang = CSTime.getMsgsafeTime(buildtime);
+                                            if(strang.endsWith(" "))
+                                            {
+                                                strang = strang.substring(0, (strang.length() - 1));
+                                            }
 
-                                    if(processes != null && !processes.isEmpty() && !processes.contains(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ()))
-                                    {
-                                        processes.add(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ());
-                                        plugin.saveConfig();
-                                    }
-                                    else
-                                    {
-                                        List<String> toadd = new ArrayList<>();
-                                        toadd.add(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ());
+                                            p.sendMessage(Main.Prefix + "§eSite built. Your building will be completed in §a" + strang + ". §eThe total building cost will be §a$" + cost + ".");
+                                            if(b.getType() == Material.SIGN_POST)
+                                            {
+                                                //String[] split = form.split(" ");
+                                                //p.sendMessage("It was indeed a sign! :o");
+                                                s.setLine(0, "§1[Construct]");
+                                                s.setLine(1, "§b" + buildtime.replace("‘", "").replace("’", "").replace("\'", ""));
+                                                s.setLine(2, "§b$" + cost);
+                                                s.setLine(3, "§3" + args[1].trim());
+                                                org.bukkit.material.Sign matSign = new org.bukkit.material.Sign(Material.SIGN_POST);
+                                                matSign.setFacingDirection(TerrainManager.getPlayerDirection(p)); // TODO ...
+                                                s.setData(matSign);
+                                                s.update();
+                                                p.sendMessage(Prefix + "§6An advance of §a$" + cost / Prefs.ac + " §6has been taken from your account.");
+                                                p.sendMessage(Prefix + "§6This cost will be returned upon the building's completion.");
+                                                signCountDown(b.getLocation());
+                                                Location loc = s.getLocation();
+
+                                                List<String> processes = (List<String>) plugin.getConfig().getList("Processes");
+
+                                                if(processes != null && !processes.isEmpty() && !processes.contains(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ()))
+                                                {
+                                                    processes.add(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ());
+                                                    plugin.saveConfig();
+                                                }
+                                                else
+                                                {
+                                                    List<String> toadd = new ArrayList<>();
+                                                    toadd.add(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ());
+
+                                                    //p.sendMessage("PROCESSES: " + toadd.toString());
+                                                    plugin.getConfig().set("Processes", toadd);
+                                                    plugin.saveConfig();
+                                                }
+                                            }
                                         
-                                        //p.sendMessage("PROCESSES: " + toadd.toString());
-                                        plugin.getConfig().set("Processes", toadd);
-                                        plugin.saveConfig();
-                                    }
-                                    
+                                        }
+                                    } catch (FilenameException | DataException | IOException | MaxChangedBlocksException | EmptyClipboardException ex) {
+                                        Logger.getLogger(ConstructCmd.class.getName()).log(Level.SEVERE, null, ex);
                                 }
                             }
                             else
@@ -198,7 +209,13 @@ public class ConstructCmd implements CommandExecutor
                                 {
                                     WorldEditPlugin wep = (WorldEditPlugin)Bukkit.getPluginManager().getPlugin("WorldEdit");
                                     TerrainManager tm = new TerrainManager(wep, p);
+                                    boolean test = tm.testLoadSchematic(new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + args[1].toLowerCase() + "-test.schematic"), p.getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(p).getOppositeFace()), false);
+                                    if(test)
+                                    {
                                     tm.loadSchematic(new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + args[1].toLowerCase() + ".schematic"), p.getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(p).getOppositeFace()));
+                                    p.sendMessage(Prefix + "§aBuilding created.");
+                                    BuildSounds.playBuildSound(BuildSounds.BuildSound.SITE_BUILT, p.getLocation());
+                                    }
                                 } 
                                 catch (FilenameException | DataException | IOException | MaxChangedBlocksException | EmptyClipboardException ex) 
                                 {
