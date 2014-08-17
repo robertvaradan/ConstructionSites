@@ -194,12 +194,12 @@ public class TerrainManager {
 	}
 
 
-    public static BlockFace getPlayerDirection(Player player)
+    public static BlockFace getPlayerDirection(Location player)
     {
  
         BlockFace dir;
      
-        float y = player.getLocation().getYaw() + 90; // Offset since we're just using this for signs, and signs have weeeeird rotations. :I
+        float y = player.getYaw() + 90; // Offset since we're just using this for signs, and signs have weeeeird rotations. :I
      
         if( y < 0 ){y += 360;}
      

@@ -53,7 +53,7 @@ public class ConstructCmd implements CommandExecutor
     
     
     @Override
-    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) 
+    public boolean onCommand(CommandSender sender, Command cmd, String label, final String[] args) 
     {
         if(cmd.getName().equalsIgnoreCase("construct") && sender instanceof Player)
         {
@@ -66,7 +66,7 @@ public class ConstructCmd implements CommandExecutor
                 plugin.saveConfig();
             }
             
-            Player p = (Player) sender;
+            final Player p = (Player) sender;
             
             if(args.length >= 1)
             {
@@ -128,8 +128,8 @@ public class ConstructCmd implements CommandExecutor
                         {
                             //p.sendMessage("§e§oAttempting to build site. Please wait a moment.");
                             //pasteSchematic(p.getWorld(), new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + args[1].toLowerCase() + ".schematic"), new Vector(p.getLocation().getBlockX(), p.getLocation().getBlockY(), p.getLocation().getBlockZ()), p, plugin.getConfig().getDouble("BuildSites." + args[1].toLowerCase() + ".Time"), (int) currenttime); 
-                            String buildtime = plugin.getConfig().getString("CS." + args[1].toLowerCase() + ".Time").replace("’", "");
-                            double cost = plugin.getConfig().getDouble("CS." + args[1].toLowerCase() + ".Cost");
+                            final String buildtime = plugin.getConfig().getString("CS." + args[1].toLowerCase() + ".Time").replace("’", "");
+                            final double cost = plugin.getConfig().getDouble("CS." + args[1].toLowerCase() + ".Cost");
                                 //p.sendMessage("Time in milis is: " + currenttime + ". Time in milis (finish) is: " + currenttime + plugin.getConfig().getInt("BuildSites." + args[1] + ".Time"));
                             
                             //p.sendMessage("Is there such a path? " + plugin.getConfig().contains("BuildSites." + args[1].toLowerCase() + ".Time"));
@@ -139,13 +139,13 @@ public class ConstructCmd implements CommandExecutor
                                 try {
                                     WorldEditPlugin wep = (WorldEditPlugin)Bukkit.getPluginManager().getPlugin("WorldEdit");
                                     TerrainManager tm = new TerrainManager(wep, p);
-                                        p.sendMessage(Prefix + "§aChecking buil permissions...");
-                                        boolean test = tm.testLoadSchematic(new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + args[1].toLowerCase() + ".schematic"), p.getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(p).getOppositeFace()), true);
+                                        p.sendMessage(Prefix + "§aScanning build area...");
+                                        boolean test = tm.testLoadSchematic(new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + args[1].toLowerCase() + ".schematic"), p.getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(p.getLocation()).getOppositeFace()), true);
                                         if(test)
                                         {
-                                        Block b = p.getLocation().getBlock();
+                                        final Block b = p.getLocation().getBlock();
                                         b.setType(Material.SIGN_POST);
-                                        Sign s = (Sign) b.getState();
+                                        final Sign s = (Sign) b.getState();
                                         //((Directional)b.getState().getData()).setFacingDirection(getFaceFromFloat(p.getLocation().getYaw(), true));
                                         //p.sendMessage("Yaw: " + p.getLocation().getYaw() + "SignFaceDir: " + ((Directional)b.getState().getData()).getFacing());
                                         //Date now = new Date(currenttime);
@@ -156,48 +156,65 @@ public class ConstructCmd implements CommandExecutor
                                         //SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
                                         //String form = format.format(then);
-                                        String strang = CSTime.getMsgsafeTime(buildtime);
-                                            if(strang.endsWith(" "))
+                                        String strong = CSTime.getMsgsafeTime(buildtime);
+                                        
+                                            if(strong.endsWith(" "))
                                             {
-                                                strang = strang.substring(0, (strang.length() - 1));
+                                                strong = strong.substring(0, (strong.length() - 1));
                                             }
+                                            
+                                            final String strang = strong;
+                                            
 
-                                            p.sendMessage(Main.Prefix + "§eSite built. Your building will be completed in §a" + strang + ". §eThe total building cost will be §a$" + cost + ".");
+                                            p.sendMessage(Prefix + "§aScanning successful: no restricted regions nearby. Creating Construction Site...");
                                             if(b.getType() == Material.SIGN_POST)
                                             {
                                                 //String[] split = form.split(" ");
                                                 //p.sendMessage("It was indeed a sign! :o");
-                                                s.setLine(0, "§1[Construct]");
-                                                s.setLine(1, "§b" + buildtime.replace("‘", "").replace("’", "").replace("\'", ""));
-                                                s.setLine(2, "§b$" + cost);
-                                                s.setLine(3, "§3" + args[1].trim());
-                                                org.bukkit.material.Sign matSign = new org.bukkit.material.Sign(Material.SIGN_POST);
-                                                matSign.setFacingDirection(TerrainManager.getPlayerDirection(p)); // TODO ...
-                                                s.setData(matSign);
-                                                s.update();
-                                                p.sendMessage(Prefix + "§6An advance of §a$" + cost / Prefs.ac + " §6has been taken from your account.");
-                                                p.sendMessage(Prefix + "§6This cost will be returned upon the building's completion.");
-                                                signCountDown(b.getLocation());
-                                                Location loc = s.getLocation();
-
-                                                List<String> processes = (List<String>) plugin.getConfig().getList("Processes");
-
-                                                if(processes != null && !processes.isEmpty() && !processes.contains(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ()))
+                                                Bukkit.getScheduler().scheduleSyncDelayedTask(Main.ConstructionSites, new Runnable()
                                                 {
-                                                    processes.add(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ());
-                                                    plugin.saveConfig();
-                                                }
-                                                else
-                                                {
-                                                    List<String> toadd = new ArrayList<>();
-                                                    toadd.add(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ());
+                                                    
+                                                    @Override
+                                                    public void run()
+                                                    {
+                                                        p.sendMessage(Main.Prefix + "§eSite built. Your building will be completed in §a" + strang + ". §eThe total building cost will be §a$" + cost + ".");
+                                                        s.setLine(0, "§1[Construct]");
+                                                        s.setLine(1, "§b" + buildtime.replace("‘", "").replace("’", "").replace("\'", ""));
+                                                        s.setLine(2, "§b$" + cost);
+                                                        s.setLine(3, "§3" + args[1].trim());
+                                                        org.bukkit.material.Sign matSign = new org.bukkit.material.Sign(Material.SIGN_POST);
+                                                        matSign.setFacingDirection(TerrainManager.getPlayerDirection(p.getLocation())); // TODO ...
+                                                        s.setData(matSign);
+                                                        s.update();
+                                                        p.sendMessage(Prefix + "§6An advance of §a$" + cost / Prefs.ac + " §6has been taken from your account.");
+                                                        p.sendMessage(Prefix + "§6This cost will be returned upon the building's completion.");
+                                                        signCountDown(b.getLocation());
+                                                        Location loc = s.getLocation();
 
-                                                    //p.sendMessage("PROCESSES: " + toadd.toString());
-                                                    plugin.getConfig().set("Processes", toadd);
-                                                    plugin.saveConfig();
-                                                }
+                                                        List<String> processes = (List<String>) plugin.getConfig().getList("Processes");
+
+                                                        if(processes != null && !processes.isEmpty() && !processes.contains(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ()))
+                                                        {
+                                                            processes.add(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ());
+                                                            plugin.saveConfig();
+                                                        }
+                                                        else
+                                                        {
+                                                            List<String> toadd = new ArrayList<>();
+                                                            toadd.add(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ());
+
+                                                            //p.sendMessage("PROCESSES: " + toadd.toString());
+                                                            plugin.getConfig().set("Processes", toadd);
+                                                            plugin.saveConfig();
+                                                        }
+                                                    }
+                                                }, 1);
                                             }
                                         
+                                        }
+                                        else
+                                        {
+                                            p.sendMessage(Prefix + "§cError: This site would overlap a region you don't have access to.");
                                         }
                                     } catch (FilenameException | DataException | IOException | MaxChangedBlocksException | EmptyClipboardException ex) {
                                         Logger.getLogger(ConstructCmd.class.getName()).log(Level.SEVERE, null, ex);
@@ -209,10 +226,10 @@ public class ConstructCmd implements CommandExecutor
                                 {
                                     WorldEditPlugin wep = (WorldEditPlugin)Bukkit.getPluginManager().getPlugin("WorldEdit");
                                     TerrainManager tm = new TerrainManager(wep, p);
-                                    boolean test = tm.testLoadSchematic(new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + args[1].toLowerCase() + "-test.schematic"), p.getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(p).getOppositeFace()), false);
+                                    boolean test = tm.testLoadSchematic(new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + args[1].toLowerCase() + "-test.schematic"), p.getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(p.getLocation()).getOppositeFace()), false);
                                     if(test)
                                     {
-                                    tm.loadSchematic(new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + args[1].toLowerCase() + ".schematic"), p.getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(p).getOppositeFace()));
+                                    tm.loadSchematic(new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + args[1].toLowerCase() + ".schematic"), p.getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(p.getLocation()).getOppositeFace()));
                                     p.sendMessage(Prefix + "§aBuilding created.");
                                     BuildSounds.playBuildSound(BuildSounds.BuildSound.SITE_BUILT, p.getLocation());
                                     }

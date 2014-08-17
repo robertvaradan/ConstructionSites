@@ -62,6 +62,7 @@ public class CSCountTask extends BukkitRunnable {
                 Sign s = (Sign) signloc.getBlock().getState();
                 s.setLine(1, "§aCompleted");
                 s.update();
+                
                 //Bukkit.broadcastMessage("§aDone! " + counter);
                 Location loc = signloc;
 
@@ -70,8 +71,7 @@ public class CSCountTask extends BukkitRunnable {
                 {
                     processes.remove(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ());
                     plugin.saveConfig();
-                }
-
+                }                
                 this.cancel();
             }
             else

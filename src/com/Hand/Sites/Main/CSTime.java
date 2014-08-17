@@ -6,6 +6,9 @@
 
 package com.Hand.Sites.Main;
 
+import java.util.Arrays;
+import org.bukkit.Bukkit;
+
 /**
  *
  * @author Robert
@@ -34,7 +37,9 @@ public class CSTime
     
     public static String getMsgsafeTime(String input)
     {                
-        String[] to = input.replace("`", "").replace("\'", "").replace("‘", "").replace("’", "").split(":");
+        String[] to = input.replace("`", "").replace("\'", "").replace("‘", "").replace("’", "")
+                .replace("h", ":").replace("m", ":").split(":");
+        Bukkit.broadcastMessage("Test: " + input + ", test 2: " + Arrays.toString(to));
         return to[0] + " hours, " + to[1] + " minutes, " + to[2] + " seconds ";
     }
     

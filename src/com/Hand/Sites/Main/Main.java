@@ -41,6 +41,13 @@ public class Main extends JavaPlugin
         setupEconomy();
         
         plugin.getServer().getPluginManager().registerEvents(new PlayerInteract(), this);
+        
+        if(!PluginServices.isInstalled("WorldEdit") || !PluginServices.isInstalled("WorldGuard") || !PluginServices.isInstalled("Vault"))
+        {
+            System.out.println("[ConstructionSites] PLUGIN BREAK! Not all necessary plugins were found. WorldEdit: " + PluginServices.isInstalled("WorldEdit") + ". WorldGuard: " + PluginServices.isInstalled("WorldGUard") + ". Vault: " + PluginServices.isInstalled("Vault"));
+            plugin.setEnabled(false);
+        }
+        
         CSConfigManager.resumeBuildProcesses();
         
         // Go away, metalmikey002.

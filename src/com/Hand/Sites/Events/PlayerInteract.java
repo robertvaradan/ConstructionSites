@@ -24,6 +24,7 @@ import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -63,11 +64,11 @@ public class PlayerInteract implements Listener
                                 try {
                                     WorldEditPlugin wep = (WorldEditPlugin)Bukkit.getPluginManager().getPlugin("WorldEdit");
                                     TerrainManager testtm = new TerrainManager(wep, p);
-                                    boolean test = testtm.testLoadSchematic(file, p.getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(p).getOppositeFace()), false);
+                                    boolean test = testtm.testLoadSchematic(file, p.getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(event.getClickedBlock().getLocation()).getOppositeFace()), false);
                                         if(test)
                                         {
                                         TerrainManager tm = new TerrainManager(wep, p);
-                                        boolean loadschematic = tm.loadSchematic(file, p.getLocation(), p, (int) TerrainManager.getFaceYaw(event.getBlockFace()));
+                                        boolean loadschematic = tm.loadSchematic(file, p.getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(event.getClickedBlock().getLocation()).getOppositeFace()));
 
                                         if(loadschematic)
                                         {
