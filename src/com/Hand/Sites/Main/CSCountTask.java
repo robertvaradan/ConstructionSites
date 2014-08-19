@@ -22,6 +22,7 @@ import org.bukkit.block.Sign;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.meta.FireworkMeta;
+import org.bukkit.material.Directional;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
@@ -76,7 +77,7 @@ public class CSCountTask extends BukkitRunnable
                             WorldEditPlugin wep = (WorldEditPlugin)Bukkit.getPluginManager().getPlugin("WorldEdit");
                             Player p = Bukkit.getPlayer(uuid);
                             TerrainManager tm = new TerrainManager(wep, Bukkit.getPlayer(uuid));
-                            tm.loadSchematic(file, signloc, p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(signloc).getOppositeFace()), true);
+                            tm.loadSchematic(file, signloc, p, (int) TerrainManager.getFaceYaw(((Directional) s.getData()).getFacing().getOppositeFace()), true);
                         }
                     }
                     catch (IOException | DataException | FilenameException | MaxChangedBlocksException | EmptyClipboardException ex) 

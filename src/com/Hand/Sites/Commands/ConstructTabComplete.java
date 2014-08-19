@@ -7,6 +7,7 @@
 package com.Hand.Sites.Commands;
 
 import com.Hand.Sites.Main.Main;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.command.Command;
@@ -25,30 +26,49 @@ public class ConstructTabComplete implements TabCompleter
     @Override
     public List<String> onTabComplete(CommandSender sender, Command cmd, String alias, String[] args) {
 
-    if(cmd.getName().equalsIgnoreCase("construct") && args.length >= 2 && args[0].equalsIgnoreCase("build")) 
+    if(cmd.getName().equalsIgnoreCase("construct") && args.length >= 2) 
     {
-        if(sender instanceof Player)
+        if(args[0].equalsIgnoreCase("build"))
         {
-            Player p = (Player) sender;
-            
-            List<String> list = (List<String>) plugin.getConfig().getList("CS.Names");
-            if(list == null)
+            if(sender instanceof Player)
             {
-                List<String> empty = new ArrayList<>();
-                list = empty;
-            }
-            
-            List<String> newList = new ArrayList<>();
-            
-            for (String site : list) 
-            {
-                if(ConstructCmd.getAllowedBuildSite(p, site))
+                Player p = (Player) sender;
+                
+                List<String> list = (List<String>) plugin.getConfig().getList("CS.Names");
+                if(list == null)
                 {
-                    newList.add(site);
+                    List<String> empty = new ArrayList<>();
+                    list = empty;
                 }
+                
+                List<String> newList = new ArrayList<>();
+                
+                for (String site : list)
+                {
+                    if(ConstructCmd.getAllowedBuildSite(p, site))
+                    {
+                        newList.add(site);
+                    }
+                }
+                
+                return newList;
             }
-
-            return newList;
+        }
+        else if(args[0].equalsIgnoreCase("admin"))
+        {
+            if(args[1].equalsIgnoreCase("addsite"))
+            {
+                File f = new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics");
+                
+                List<String> list = new ArrayList<>();
+                
+                for(File file : f.listFiles())
+                {
+                    list.add(file.getName().replace(".schematic", ""));
+                }
+                
+                return list;
+            }
         }
     }
 

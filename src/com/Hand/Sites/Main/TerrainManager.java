@@ -18,10 +18,8 @@ import com.sk89q.worldedit.data.DataException;
 import com.sk89q.worldedit.schematic.SchematicFormat;
 import java.io.File;
 import java.io.IOException;
-import org.bukkit.Effect;
 import org.bukkit.EntityEffect;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
@@ -117,6 +115,7 @@ public class TerrainManager {
 		editSession.enableQueue();
 		localSession.setClipboard(SchematicFormat.MCEDIT.load(saveFile));
                 boolean resolved = false;
+                //Bukkit.broadcastMessage("Rotation is: " + rotation);
                 localSession.getClipboard().rotate2D((int) rotation);
                 
                 
@@ -145,7 +144,7 @@ public class TerrainManager {
 
                     if(!resolved)
                     {
-                        localSession.getClipboard().place(editSession, new Vector(loc.getBlockX() - (localSession.getClipboard().getWidth() / 2), loc.getBlockY(), (loc.getBlockZ() - localSession.getClipboard().getWidth() / 2)), noair);
+                        localSession.getClipboard().place(editSession, new Vector(loc.getBlockX() - (localSession.getClipboard().getWidth() / 2), loc.getBlockY(), (loc.getBlockZ() - localSession.getClipboard().getLength() / 2)), noair);
                     }
 
                     editSession.flushQueue();
@@ -280,7 +279,7 @@ public class TerrainManager {
                             return false;
                     }
                     
-                    if(placetest)
+                    if(/*placetest*/ 1 == 2 /* Basically, never. */)
                     {
                         if(locationCanBuild(newloc, p))
                         {

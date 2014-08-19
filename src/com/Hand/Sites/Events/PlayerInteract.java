@@ -22,15 +22,14 @@ import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.Sound;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.material.Directional;
 
 public class PlayerInteract implements Listener
 {
@@ -64,11 +63,12 @@ public class PlayerInteract implements Listener
                                 try {
                                     WorldEditPlugin wep = (WorldEditPlugin)Bukkit.getPluginManager().getPlugin("WorldEdit");
                                     TerrainManager testtm = new TerrainManager(wep, p);
-                                    boolean test = testtm.testLoadSchematic(file, event.getClickedBlock().getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(event.getClickedBlock().getLocation()).getOppositeFace()), false);
+                                    boolean test = testtm.testLoadSchematic(file, event.getClickedBlock().getLocation(), p, (int) TerrainManager.getFaceYaw(((Directional) sign.getData()).getFacing().getOppositeFace()), false);
                                         if(test)
                                         {
                                         TerrainManager tm = new TerrainManager(wep, p);
-                                        boolean loadschematic = tm.loadSchematic(file, event.getClickedBlock().getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(event.getClickedBlock().getLocation()).getOppositeFace()), false);
+                                        boolean loadschematic = tm.loadSchematic(file, event.getClickedBlock().getLocation(), p, (int) TerrainManager.getFaceYaw(((Directional) sign.getData()).getFacing().getOppositeFace()), false);
+                                        //Bukkit.broadcastMessage("Rotation is: " + TerrainManager.getPlayerDirection(event.getClickedBlock().getLocation()) + " and " + TerrainManager.getFaceYaw(((Directional) sign).getFacing().getOppositeFace()));
 
                                         if(loadschematic)
                                         {
