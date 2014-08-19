@@ -21,6 +21,7 @@ public class Prefs
     public static int bsox;
     public static int bsoy;
     public static int bsoz;
+    public static boolean particles;
     
     public static void configTasks()
     {
@@ -32,6 +33,7 @@ public class Prefs
         c.addDefault("CS.Prefs.Pasting.Offset.X", 2);
         c.addDefault("CS.Prefs.Pasting.Offset.Y", 2);
         c.addDefault("CS.Prefs.Pasting.Offset.Z", 2);
+        c.addDefault("CS.Prefs.PrePasteParticles", true);
         
         File file = new File(plugin.getDataFolder() + File.separator + "config.yml");
         
@@ -51,5 +53,6 @@ public class Prefs
         bsox = c.getInt("CS.Prefs.Pasting.Offset.X");
         bsoy = c.getInt("CS.Prefs.Pasting.Offset.Y");
         bsoz = c.getInt("CS.Prefs.Pasting.Offset.Z");
+        particles = c.getBoolean("CS.Prefs.PrePasteParticles");
     }
 }

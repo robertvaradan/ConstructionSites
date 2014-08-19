@@ -64,11 +64,11 @@ public class PlayerInteract implements Listener
                                 try {
                                     WorldEditPlugin wep = (WorldEditPlugin)Bukkit.getPluginManager().getPlugin("WorldEdit");
                                     TerrainManager testtm = new TerrainManager(wep, p);
-                                    boolean test = testtm.testLoadSchematic(file, p.getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(event.getClickedBlock().getLocation()).getOppositeFace()), false);
+                                    boolean test = testtm.testLoadSchematic(file, event.getClickedBlock().getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(event.getClickedBlock().getLocation()).getOppositeFace()), false);
                                         if(test)
                                         {
                                         TerrainManager tm = new TerrainManager(wep, p);
-                                        boolean loadschematic = tm.loadSchematic(file, p.getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(event.getClickedBlock().getLocation()).getOppositeFace()));
+                                        boolean loadschematic = tm.loadSchematic(file, event.getClickedBlock().getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(event.getClickedBlock().getLocation()).getOppositeFace()), false);
 
                                         if(loadschematic)
                                         {
@@ -77,13 +77,12 @@ public class PlayerInteract implements Listener
                                                 + "Total due: §e$" + (cost - cost * Prefs.ac) + "§e.");
                                         p.sendMessage(Prefix + "§aBuilding created.");
                                         Main.economy.withdrawPlayer(p, cost);
-                                        event.getClickedBlock().breakNaturally();
+                                        //event.getClickedBlock().breakNaturally();
                                         BuildSounds.playBuildSound(BuildSounds.BuildSound.SITE_BUILT, p.getLocation());
 
                                         BukkitUtil.findFreePosition(p);
 
-                                        sign.getBlock().breakNaturally();
-                                        sign.getLocation().getWorld().playSound(sign.getLocation(), Sound.DIG_WOOD, 3, 1);
+                                        sign.setLine(0, "§c[Construct]");
 
                                         BuildSounds.playBuildSound(BuildSound.SITE_BUILT, p.getLocation());                                        
                                         }

@@ -7,7 +7,6 @@
 package com.Hand.Sites.Commands;
 
 import com.Hand.Sites.Main.BuildSounds;
-import com.Hand.Sites.Main.BuildSounds.BuildSound;
 import com.Hand.Sites.Main.CSCountTask;
 import com.Hand.Sites.Main.CSTime;
 import com.Hand.Sites.Main.Main;
@@ -28,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
@@ -78,19 +78,26 @@ public class ConstructCmd implements CommandExecutor
                         {
                             if(args.length >= 5)
                             {
+                                if(args[3].contains(":") && args[4].contains("."))
+                                {
                                     if(!list.contains(args[2].toLowerCase()))
                                     {
                                     list.add(args[2].toLowerCase());
                                     }
                                     
-                                p.sendMessage(Prefix + "§aSuccessfully added \"§b" + args[2].toLowerCase() + "§a.\"");
-                                plugin.getConfig().set("CS." + args[2].toLowerCase() + ".Time", args[3]);
-                                plugin.getConfig().set("CS." + args[2].toLowerCase() + ".Cost", Double.parseDouble(args[4].replace("$", "")));
-                                plugin.saveConfig();
+                                    p.sendMessage(Prefix + "§aSuccessfully added \"§b" + args[2].toLowerCase() + "§a.\"");
+                                    plugin.getConfig().set("CS." + args[2].toLowerCase() + ".Time", args[3]);
+                                    plugin.getConfig().set("CS." + args[2].toLowerCase() + ".Cost", Double.parseDouble(args[4].replace("$", "")));
+                                    plugin.saveConfig();
+                                }
+                                else
+                                {
+                                    p.sendMessage(Prefix + "§4ERROR: §cInvalid setup! Usage: §6/construct admin addsite (site name) (hours:minutes:seconds) (dollars.cents)");
+                                }
                             }
                             else
                             {
-                                p.sendMessage(Prefix + "§cPlease choose a site to add. §6/construct admin addsite §4<Name> <Construction Time> <hours:minutes:seconds> <Cost: dollars.cents>");
+                                p.sendMessage(Prefix + "§cPlease choose a site to add. §6/construct admin addsite §4<Name> <hours:minutes:seconds> <Cost: dollars.cents>");
                             }
                         }
                         else if(args[1].equalsIgnoreCase("delsite"))
@@ -140,7 +147,7 @@ public class ConstructCmd implements CommandExecutor
                                     WorldEditPlugin wep = (WorldEditPlugin)Bukkit.getPluginManager().getPlugin("WorldEdit");
                                     TerrainManager tm = new TerrainManager(wep, p);
                                         p.sendMessage(Prefix + "§aScanning build area...");
-                                        boolean test = tm.testLoadSchematic(new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + args[1].toLowerCase() + ".schematic"), p.getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(p.getLocation()).getOppositeFace()), true);
+                                        boolean test = tm.testLoadSchematic(new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + args[1].toLowerCase() + ".schematic"), p.getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(p.getLocation()).getOppositeFace()), Prefs.particles);
                                         if(test)
                                         {
                                         final Block b = p.getLocation().getBlock();
@@ -188,20 +195,20 @@ public class ConstructCmd implements CommandExecutor
                                                         s.update();
                                                         p.sendMessage(Prefix + "§6An advance of §a$" + cost / Prefs.ac + " §6has been taken from your account.");
                                                         p.sendMessage(Prefix + "§6This cost will be returned upon the building's completion.");
-                                                        signCountDown(b.getLocation());
+                                                        signCountDown(b.getLocation(), p.getUniqueId());
                                                         Location loc = s.getLocation();
 
                                                         List<String> processes = (List<String>) plugin.getConfig().getList("Processes");
 
                                                         if(processes != null && !processes.isEmpty() && !processes.contains(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ()))
                                                         {
-                                                            processes.add(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ());
+                                                            processes.add(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ() + "," + p.getUniqueId().toString());
                                                             plugin.saveConfig();
                                                         }
                                                         else
                                                         {
                                                             List<String> toadd = new ArrayList<>();
-                                                            toadd.add(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ());
+                                                            toadd.add(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ() + "," + p.getUniqueId().toString());
 
                                                             //p.sendMessage("PROCESSES: " + toadd.toString());
                                                             plugin.getConfig().set("Processes", toadd);
@@ -226,10 +233,10 @@ public class ConstructCmd implements CommandExecutor
                                 {
                                     WorldEditPlugin wep = (WorldEditPlugin)Bukkit.getPluginManager().getPlugin("WorldEdit");
                                     TerrainManager tm = new TerrainManager(wep, p);
-                                    boolean test = tm.testLoadSchematic(new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + args[1].toLowerCase() + "-test.schematic"), p.getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(p.getLocation()).getOppositeFace()), false);
+                                    boolean test = tm.testLoadSchematic(new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + args[1].toLowerCase() + "-test.schematic"), p.getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(p.getLocation()).getOppositeFace()), Prefs.particles);
                                     if(test)
                                     {
-                                    tm.loadSchematic(new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + args[1].toLowerCase() + ".schematic"), p.getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(p.getLocation()).getOppositeFace()));
+                                    tm.loadSchematic(new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + args[1].toLowerCase() + ".schematic"), p.getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(p.getLocation()).getOppositeFace()), false);
                                     p.sendMessage(Prefix + "§aBuilding created.");
                                     BuildSounds.playBuildSound(BuildSounds.BuildSound.SITE_BUILT, p.getLocation());
                                     }
@@ -416,8 +423,8 @@ public class ConstructCmd implements CommandExecutor
         return bf;
     }
 
-    public static void signCountDown(Location loc) 
+    public static void signCountDown(Location loc, UUID uuid) 
     {
-        BukkitTask task = new CSCountTask(Main.getProvidingPlugin(Main.class), loc).runTaskTimer(ConstructCmd.plugin, 20, 20);
+        BukkitTask task = new CSCountTask(Main.getProvidingPlugin(Main.class), loc, uuid).runTaskTimer(ConstructCmd.plugin, 20, 20);
     }
 }

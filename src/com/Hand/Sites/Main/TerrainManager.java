@@ -19,6 +19,7 @@ import com.sk89q.worldedit.schematic.SchematicFormat;
 import java.io.File;
 import java.io.IOException;
 import org.bukkit.Effect;
+import org.bukkit.EntityEffect;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -99,6 +100,7 @@ public class TerrainManager {
 	 * @param loc		the location to paste the clipboard at (may be null)
      * @param p
      * @param rotation
+     * @param noair
      * @return 
 	 * @throws FilenameException
 	 * @throws DataException
@@ -106,7 +108,7 @@ public class TerrainManager {
 	 * @throws MaxChangedBlocksException
 	 * @throws EmptyClipboardException
 	 */
-	public boolean loadSchematic(File saveFile, Location loc, Player p, int rotation) throws FilenameException, DataException, IOException, MaxChangedBlocksException, EmptyClipboardException {
+	public boolean loadSchematic(File saveFile, Location loc, Player p, int rotation, boolean noair) throws FilenameException, DataException, IOException, MaxChangedBlocksException, EmptyClipboardException {
 		saveFile = we.getSafeSaveFile(localPlayer,
                            saveFile.getParentFile(), saveFile.getName(),
                            EXTENSION, 
@@ -132,14 +134,10 @@ public class TerrainManager {
                             Prefs.bsoz + localSession.getClipboard().getOffset().getBlockZ()))
                     {
                         //p.sendMessage("§7DEBUG: §aScanning area: §6" + loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ() + ".");
-                        if(!locationCanBuild(newloc, p) && !resolved)
+                        if(p != null && !locationCanBuild(newloc, p) && !resolved)
                         {
                                 p.sendMessage(Prefix + "§4ERROR: §6Could not create construction site. It overlaps a region you can't build in.");
                                 resolved = true;
-                                if(loc.getBlock().getType() == Material.SIGN || loc.getBlock().getType() == Material.SIGN_POST || loc.getBlock().getType() == Material.WALL_SIGN)
-                                {
-                                    loc.getBlock().breakNaturally();
-                                }
                                 return false;
                         }
                         
@@ -147,7 +145,7 @@ public class TerrainManager {
 
                     if(!resolved)
                     {
-                        localSession.getClipboard().place(editSession, new Vector(loc.getBlockX() - (localSession.getClipboard().getWidth() / 2), loc.getBlockY(), (loc.getBlockZ() - localSession.getClipboard().getWidth() / 2)), true);
+                        localSession.getClipboard().place(editSession, new Vector(loc.getBlockX() - (localSession.getClipboard().getWidth() / 2), loc.getBlockY(), (loc.getBlockZ() - localSession.getClipboard().getWidth() / 2)), noair);
                     }
 
                     editSession.flushQueue();
@@ -167,7 +165,7 @@ public class TerrainManager {
 	 * @throws EmptyClipboardException
 	 */
 	public void loadSchematic(File saveFile) throws FilenameException, DataException, IOException, MaxChangedBlocksException, EmptyClipboardException {
-		loadSchematic(saveFile, null, null, 0);
+		loadSchematic(saveFile, null, null, 0, true);
 	}
 
 	private Vector getPastePosition(Location loc) throws EmptyClipboardException {
@@ -286,7 +284,11 @@ public class TerrainManager {
                     {
                         if(locationCanBuild(newloc, p))
                         {
-                            p.playEffect(newloc, Effect.SMOKE, 0);
+                            p.playEffect(EntityEffect.VILLAGER_HEART);
+                        }
+                        else
+                        {
+                            p.playEffect(EntityEffect.VILLAGER_ANGRY);
                         }
                     }
                     
