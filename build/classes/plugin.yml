@@ -1,0 +1,11 @@
+name: ConstructionSites
+version: 1.0
+main: com.Hand.Sites.Main.Main
+description: Used to create sites & creations from WorldEdit schematics.
+softdepend: [WorldEdit, WorldGuard, Vault]
+commands:
+  construct:
+    description: Base command for building.
+    permission: whymcraft.blockshield
+    permission-message: '§4Error: §cNot allowed to use Block Shields!'
+    aliases: [con, cs constructionsites]
