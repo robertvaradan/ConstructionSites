@@ -4,11 +4,12 @@
  * and open the template in the editor.
  */
 
-package com.Hand.Sites.Main;
+package com.Hand.Sites.Core;
 
-import org.bukkit.Bukkit;
+import com.Hand.Sites.Main.Main;
 import org.bukkit.Location;
 import org.bukkit.Sound;
+import org.bukkit.scheduler.BukkitRunnable;
 
 /**
  *
@@ -26,21 +27,26 @@ public class BuildSounds
     static int SoundTask = 0;
 
     public static void playBuildSound(BuildSound sound, final Location loc) 
-    {        
-        for(int i = 0; i < 4; i++)
+    {
+        final int[] count = {0};
+        if(sound == BuildSound.SITE_BUILT)
         {
-            if(sound == BuildSound.SITE_BUILT)
+            new BukkitRunnable()
             {
-                SoundTask = Bukkit.getScheduler().scheduleSyncDelayedTask(Main.ConstructionSites, new Runnable() 
-                {
 
-                    @Override
-                    public void run() 
+                @Override
+                public void run()
+                {
+                    loc.getWorld().playSound(loc, Sound.NOTE_BASS_DRUM, 3, 1);
+
+                    count[0]++;
+
+                    if(count[0] == 3)
                     {
-                            loc.getWorld().playSound(loc, Sound.NOTE_BASS_DRUM, 3, 1);
+                        cancel();
                     }
-                }, 5 + (i * 5));
-            }
+                }
+            }.runTaskTimer(plugin, 0, 5);
         }
     }
 }

@@ -1,23 +1,15 @@
-package com.Hand.Sites.Main;
+package com.Hand.Sites.Core;
 
+import com.Hand.CSAPI.Events.SiteCompleteEvent;
+import com.Hand.CSAPI.Events.SiteFinishEvent;
 import com.sk89q.worldedit.EmptyClipboardException;
 import com.sk89q.worldedit.FilenameException;
 import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.data.DataException;
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.bukkit.Bukkit;
-import org.bukkit.Color;
-import org.bukkit.FireworkEffect;
+import org.bukkit.*;
 import org.bukkit.FireworkEffect.Builder;
 import org.bukkit.FireworkEffect.Type;
-import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
@@ -27,6 +19,13 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 public class CSCountTask extends BukkitRunnable 
 {
  
@@ -35,13 +34,14 @@ public class CSCountTask extends BukkitRunnable
     private int counter;
     private Location signloc;
     private UUID uuid;
+    private int bt;
  
     public CSCountTask(JavaPlugin plugin, Location loc, UUID uuid) 
     {
         this.plugin = plugin;
-        if (loc.getBlock().getType() != Material.SIGN && loc.getBlock().getType() != Material.WALL_SIGN && loc.getBlock().getType() != Material.SIGN_POST) 
+        if (loc.getBlock().getType() != Material.SIGN && loc.getBlock().getType() != Material.WALL_SIGN && loc.getBlock().getType() != Material.SIGN_POST)
         {
-        //Bukkit.broadcastMessage("§6ERROR WITH SIGN! NOT EXIST ONOES");
+            //Bukkit.broadcastMessage("&sect;6ERROR WITH SIGN! NOT EXIST ONOES");
         }
         else
         {
@@ -49,6 +49,7 @@ public class CSCountTask extends BukkitRunnable
             this.counter = CSTime.getDurationBreakdownToTicks(((Sign) loc.getBlock().getState()).getLine(1).replace("§b", ""));
             this.signloc = loc;
             this.uuid = uuid;
+            this.bt = CSTime.getDurationBreakdownToTicks(((Sign) loc.getBlock().getState()).getLine(1).replace("§b", ""));
         }
     }
 
@@ -103,8 +104,18 @@ public class CSCountTask extends BukkitRunnable
                 Sign s = (Sign) signloc.getBlock().getState();
                 s.setLine(1, "§aCompleted");
                 s.update();
-                
-                Firework stack = (Firework) signloc.getWorld().spawn(signloc, Firework.class);
+
+
+                // Legacy
+                SiteCompleteEvent event = new SiteCompleteEvent(s.getLine(3), Bukkit.getPlayer(uuid));
+                Bukkit.getServer().getPluginManager().callEvent(event);
+
+                // New, better
+
+                SiteFinishEvent event1 = new SiteFinishEvent(s.getLine(3), uuid, bt, CSTime.getDurationBreakdownToTicks(((Sign) signloc.getBlock().getState()).getLine(1).replace("§3$", "")), signloc);
+                Bukkit.getServer().getPluginManager().callEvent(event1);
+
+                Firework stack = signloc.getWorld().spawn(signloc, Firework.class);
                 stack.setVelocity(new Vector(0, stack.getVelocity().getBlockY(), 0));
                 FireworkMeta meta = stack.getFireworkMeta();
 
@@ -115,9 +126,9 @@ public class CSCountTask extends BukkitRunnable
                 meta.addEffect(effect1.build());
 
                 meta.setPower(3);
-                
+
                 stack.setFireworkMeta(meta);
-                
+
                 //Bukkit.broadcastMessage("§aDone! " + counter);
                 Location loc = signloc;
 
@@ -126,7 +137,7 @@ public class CSCountTask extends BukkitRunnable
                 {
                     processes.remove(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ() + "," + uuid);
                     plugin.saveConfig();
-                }                
+                }
                 this.cancel();
             }
             else

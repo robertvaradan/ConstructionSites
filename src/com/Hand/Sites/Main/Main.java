@@ -8,6 +8,7 @@ package com.Hand.Sites.Main;
 
 import com.Hand.Sites.Commands.ConstructCmd;
 import com.Hand.Sites.Commands.ConstructTabComplete;
+import com.Hand.Sites.Core.URLServices.DLC;
 import com.Hand.Sites.Events.PlayerInteract;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import net.milkbowl.vault.economy.Economy;
@@ -15,6 +16,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.io.File;
 
 /**
  *
@@ -49,6 +52,8 @@ public class Main extends JavaPlugin
         }
         
         CSConfigManager.resumeBuildProcesses();
+        startupPackInstall();
+        
         
         // Go away, metalmikey002.
     }
@@ -79,6 +84,31 @@ public class Main extends JavaPlugin
         }
 
         return (economy != null);
+    }
+
+    private void startupPackInstall() 
+    {
+
+        for(File pack : new File(plugin.getDataFolder().getParent()).listFiles())
+        {
+            if(pack.getName().endsWith("#cspack"))
+            {
+            System.out.println("[CS | CNP] Found CSPack at " + pack.toString());
+                if(pack.exists()) // Uh...? Why am I checking for this? ono phail
+                {
+                    System.out.println("[CS | CNP] Installing package...");
+
+                    if(DLC.installPackage(pack))
+                    {
+                        System.out.println("[CS | CNP] Successfully installed files.");
+                    }
+                    else
+                    {
+                        System.out.println("[CS | CNP] Error occurred. No CSPack found. Was it deleted?");
+                    }
+                }
+            }
+        }
     }
 
     

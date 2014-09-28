@@ -1,5 +1,5 @@
 name: ConstructionSites
-version: 1.0
+version: 0.9
 main: com.Hand.Sites.Main.Main
 description: Used to create sites & creations from WorldEdit schematics.
 softdepend: [WorldEdit, WorldGuard, Vault]

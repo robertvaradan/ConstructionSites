@@ -6,35 +6,20 @@
 
 package com.Hand.Sites.Commands;
 
-import com.Hand.Sites.Main.BuildSounds;
-import com.Hand.Sites.Main.CSCountTask;
-import com.Hand.Sites.Main.CSTime;
+import com.Hand.CSAPI.ConstructionSite;
+import com.Hand.Sites.Core.CSCountTask;
+import com.Hand.Sites.Core.URLServices.DLC;
 import com.Hand.Sites.Main.Main;
-import static com.Hand.Sites.Main.Main.Prefix;
 import com.Hand.Sites.Main.Prefs;
-import com.Hand.Sites.Main.TerrainManager;
 import com.sk89q.worldedit.CuboidClipboard;
 import com.sk89q.worldedit.EditSession;
-import com.sk89q.worldedit.EmptyClipboardException;
-import com.sk89q.worldedit.FilenameException;
 import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.bukkit.BukkitWorld;
-import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.data.DataException;
 import com.sk89q.worldedit.schematic.SchematicFormat;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
 import org.bukkit.command.Command;
@@ -42,6 +27,14 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import static com.Hand.Sites.Main.Main.Prefix;
 
 /**
  *
@@ -127,133 +120,19 @@ public class ConstructCmd implements CommandExecutor
                         p.sendMessage(Prefix + "§cPlease choose an action.");
                     }
                 }
+                if(args[0].equalsIgnoreCase("scan") && getAllowedBuildSite(p, args[1].toLowerCase()))
+                {
+                    ConstructionSite.scanBuildArea(p.getLocation(), args[1], p);
+                }
+                else if(args[0].equalsIgnoreCase("scan"))
+                {
+                    p.sendMessage(Prefix + "§cYou can't scan for this area!");
+                }
                 if(args[0].equalsIgnoreCase("build"))
                 {
                     if(args.length >= 2)
                     {
-                        if(getAllowedBuildSite(p, args[1].toLowerCase()))
-                        {
-                            //p.sendMessage("§e§oAttempting to build site. Please wait a moment.");
-                            //pasteSchematic(p.getWorld(), new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + args[1].toLowerCase() + ".schematic"), new Vector(p.getLocation().getBlockX(), p.getLocation().getBlockY(), p.getLocation().getBlockZ()), p, plugin.getConfig().getDouble("BuildSites." + args[1].toLowerCase() + ".Time"), (int) currenttime); 
-                            final String buildtime = plugin.getConfig().getString("CS." + args[1].toLowerCase() + ".Time").replace("’", "");
-                            final double cost = plugin.getConfig().getDouble("CS." + args[1].toLowerCase() + ".Cost");
-                                //p.sendMessage("Time in milis is: " + currenttime + ". Time in milis (finish) is: " + currenttime + plugin.getConfig().getInt("BuildSites." + args[1] + ".Time"));
-                            
-                            //p.sendMessage("Is there such a path? " + plugin.getConfig().contains("BuildSites." + args[1].toLowerCase() + ".Time"));
-                            
-                            if(!"0:0:0".equals(plugin.getConfig().getString("CS." + args[1].toLowerCase() + ".Time")))
-                            {
-                                try {
-                                    WorldEditPlugin wep = (WorldEditPlugin)Bukkit.getPluginManager().getPlugin("WorldEdit");
-                                    TerrainManager tm = new TerrainManager(wep, p);
-                                        p.sendMessage(Prefix + "§aScanning build area...");
-                                        boolean test = tm.testLoadSchematic(new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + args[1].toLowerCase() + ".schematic"), p.getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(p.getLocation()).getOppositeFace()), Prefs.particles);
-                                        if(test)
-                                        {
-                                        final Block b = p.getLocation().getBlock();
-                                        b.setType(Material.SIGN_POST);
-                                        final Sign s = (Sign) b.getState();
-                                        //((Directional)b.getState().getData()).setFacingDirection(getFaceFromFloat(p.getLocation().getYaw(), true));
-                                        //p.sendMessage("Yaw: " + p.getLocation().getYaw() + "SignFaceDir: " + ((Directional)b.getState().getData()).getFacing());
-                                        //Date now = new Date(currenttime);
-                                        //Date then = new Date(currenttime + buildtime);
-                                        //now.getTime() returns the Unix-Timestamp.
-
-                                        //format the output to "24-01-2012 15:19:45"
-                                        //SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-
-                                        //String form = format.format(then);
-                                        String strong = CSTime.getMsgsafeTime(buildtime);
-                                        
-                                            if(strong.endsWith(" "))
-                                            {
-                                                strong = strong.substring(0, (strong.length() - 1));
-                                            }
-                                            
-                                            final String strang = strong;
-                                            
-
-                                            p.sendMessage(Prefix + "§aScanning successful: no restricted regions nearby. Creating Construction Site...");
-                                            if(b.getType() == Material.SIGN_POST)
-                                            {
-                                                //String[] split = form.split(" ");
-                                                //p.sendMessage("It was indeed a sign! :o");
-                                                Bukkit.getScheduler().scheduleSyncDelayedTask(Main.ConstructionSites, new Runnable()
-                                                {
-                                                    
-                                                    @Override
-                                                    public void run()
-                                                    {
-                                                        p.sendMessage(Main.Prefix + "§eSite built. Your building will be completed in §a" + strang + ". §eThe total building cost will be §a$" + cost + ".");
-                                                        s.setLine(0, "§1[Construct]");
-                                                        s.setLine(1, "§b" + buildtime.replace("‘", "").replace("’", "").replace("\'", ""));
-                                                        s.setLine(2, "§b$" + cost);
-                                                        s.setLine(3, "§3" + args[1].trim());
-                                                        org.bukkit.material.Sign matSign = new org.bukkit.material.Sign(Material.SIGN_POST);
-                                                        matSign.setFacingDirection(TerrainManager.getPlayerDirection(p.getLocation())); // TODO ...
-                                                        s.setData(matSign);
-                                                        s.update();
-                                                        p.sendMessage(Prefix + "§6An advance of §a$" + cost / Prefs.ac + " §6has been taken from your account.");
-                                                        p.sendMessage(Prefix + "§6This cost will be returned upon the building's completion.");
-                                                        signCountDown(b.getLocation(), p.getUniqueId());
-                                                        Location loc = s.getLocation();
-
-                                                        List<String> processes = (List<String>) plugin.getConfig().getList("Processes");
-
-                                                        if(processes != null && !processes.isEmpty() && !processes.contains(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ()))
-                                                        {
-                                                            processes.add(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ() + "," + p.getUniqueId().toString());
-                                                            plugin.saveConfig();
-                                                        }
-                                                        else
-                                                        {
-                                                            List<String> toadd = new ArrayList<>();
-                                                            toadd.add(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ() + "," + p.getUniqueId().toString());
-
-                                                            //p.sendMessage("PROCESSES: " + toadd.toString());
-                                                            plugin.getConfig().set("Processes", toadd);
-                                                            plugin.saveConfig();
-                                                        }
-                                                    }
-                                                }, 1);
-                                            }
-                                        
-                                        }
-                                        else
-                                        {
-                                            p.sendMessage(Prefix + "§cError: This site would overlap a region you don't have access to.");
-                                        }
-                                    } catch (FilenameException | DataException | IOException | MaxChangedBlocksException | EmptyClipboardException ex) {
-                                        Logger.getLogger(ConstructCmd.class.getName()).log(Level.SEVERE, null, ex);
-                                }
-                            }
-                            else
-                            {
-                                try 
-                                {
-                                    WorldEditPlugin wep = (WorldEditPlugin)Bukkit.getPluginManager().getPlugin("WorldEdit");
-                                    TerrainManager tm = new TerrainManager(wep, p);
-                                    boolean test = tm.testLoadSchematic(new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + args[1].toLowerCase() + "-test.schematic"), p.getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(p.getLocation()).getOppositeFace()), Prefs.particles);
-                                    if(test)
-                                    {
-                                    tm.loadSchematic(new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + args[1].toLowerCase() + ".schematic"), p.getLocation(), p, (int) TerrainManager.getFaceYaw(TerrainManager.getPlayerDirection(p.getLocation()).getOppositeFace()), false);
-                                    p.sendMessage(Prefix + "§aBuilding created.");
-                                    BuildSounds.playBuildSound(BuildSounds.BuildSound.SITE_BUILT, p.getLocation());
-                                    }
-                                } 
-                                catch (FilenameException | DataException | IOException | MaxChangedBlocksException | EmptyClipboardException ex) 
-                                {
-                                    Logger.getLogger(ConstructCmd.class.getName()).log(Level.SEVERE, null, ex);
-                                }
-                            }
-
-
-
-                        }
-                        else
-                        {
-                            p.sendMessage(Prefix + "§cNo blueprint for this site is avalible.");
-                        }
+                        ConstructionSite s = new ConstructionSite(p.getLocation(), p.getUniqueId(), args[1], Prefix, false);
                     }
                     else
                     {
@@ -268,17 +147,31 @@ public class ConstructCmd implements CommandExecutor
 
                     }
                 }
+                else if(args[0].equalsIgnoreCase("install"))
+                {
+                    if(p.hasPermission("csites.admin") && args.length >= 1)
+                    {                        
+                        File pack = new File(plugin.getDataFolder().getParent() + "/" + args[1]);
+                        
+                        if(pack.exists())
+                        {
+                            p.sendMessage(Prefix + "Installing package...");
+                            
+                            if(DLC.installPackage(pack))
+                            {
+                                p.sendMessage(Prefix + "§aSuccess!");
+                            }
+                            else
+                            {
+                                p.sendMessage(Prefix + "§cError ocurred. No CSPack by that name found!.");
+                            }
+                        }
+                    }
+                }
             }
             else
             {
-                p.sendMessage("§ePlease specify what type of building you want to make. §eAllowed sites:");
-                for (String site : list) 
-                {
-                    if(getAllowedBuildSite(p, site))
-                    {
-                        p.sendMessage("§6- " + site + ", §a$" + plugin.getConfig().getDouble("CS." + site + ".Cost"));
-                    }
-                }
+                p.sendMessage(Prefix + "§4Too few arguments. §6/construct build§e, §6/construct admin§e, §6/construct install§e.");
             }
         }
         return false;

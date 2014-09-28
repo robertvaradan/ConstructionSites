@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package com.Hand.Sites.Main;
+package com.Hand.Sites.Core;
 
 /**
  *
@@ -14,22 +14,28 @@ public class CSTime
 {
     public static int getDurationBreakdownToTicks(String string)
     {
-        String[] part = string.replace("", "‘").replace("\'", "").replace("‘", "").split(":");
-        int isecs = Integer.parseInt(part[2]);
-        
-        int imins = Integer.parseInt(part[1]);
-        
-        int ihrs = Integer.parseInt(part[0]);
+        if(string.contains(":"))
+        {
+            String[] part = string.replace("", "‘").replace("\'", "").replace("‘", "").split(":");
+            int isecs = Integer.parseInt(part[2]);
 
-        int hours = ihrs * 60 * 60 * 20;
-        int minutes = imins * 60 * 20;
-        int seconds = isecs * 20;
-        
-        int simplemaths = hours + minutes + seconds;
+            int imins = Integer.parseInt(part[1]);
+
+            int ihrs = Integer.parseInt(part[0]);
+
+            int hours = ihrs * 60 * 60 * 20;
+            int minutes = imins * 60 * 20;
+            int seconds = isecs * 20;
+
+            int simplemaths = hours + minutes + seconds;
+
+            return simplemaths;
+        }
+
         
         //Bukkit.broadcastMessage("Returning: §a" + hours + " + " + minutes + " + " + seconds + " = " + simplemaths);
 
-        return simplemaths;
+        return 0;
     }
     
     public static String getMsgsafeTime(String input)

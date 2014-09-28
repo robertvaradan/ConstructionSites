@@ -1,5 +1,6 @@
-package com.Hand.Sites.Main;
+package com.Hand.Sites.Core;
 
+import com.Hand.Sites.Main.Prefs;
 import static com.Hand.Sites.Commands.ConstructCmd.locationCanBuild;
 import static com.Hand.Sites.Commands.ConstructCmd.scanForArea;
 import static com.Hand.Sites.Main.Main.Prefix;

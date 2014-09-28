@@ -1,14 +1,14 @@
 package com.Hand.Sites.Events;
 
 import com.Hand.Sites.Commands.ConstructCmd;
-import com.Hand.Sites.Main.BuildSounds;
-import com.Hand.Sites.Main.BuildSounds.BuildSound;
-import com.Hand.Sites.Main.CSTime;
+import com.Hand.Sites.Core.BuildSounds;
+import com.Hand.Sites.Core.BuildSounds.BuildSound;
+import com.Hand.Sites.Core.CSTime;
 import com.Hand.Sites.Main.Main;
 import static com.Hand.Sites.Main.Main.Prefix;
 import static com.Hand.Sites.Main.Main.economy;
 import com.Hand.Sites.Main.Prefs;
-import com.Hand.Sites.Main.TerrainManager;
+import com.Hand.Sites.Core.TerrainManager;
 import com.sk89q.worldedit.EmptyClipboardException;
 import com.sk89q.worldedit.FilenameException;
 import com.sk89q.worldedit.MaxChangedBlocksException;
@@ -63,7 +63,7 @@ public class PlayerInteract implements Listener
                                 try {
                                     WorldEditPlugin wep = (WorldEditPlugin)Bukkit.getPluginManager().getPlugin("WorldEdit");
                                     TerrainManager testtm = new TerrainManager(wep, p);
-                                    boolean test = testtm.testLoadSchematic(file, event.getClickedBlock().getLocation(), p, (int) TerrainManager.getFaceYaw(((Directional) sign.getData()).getFacing().getOppositeFace()), false);
+                                        boolean test = testtm.testLoadSchematic(file, event.getClickedBlock().getLocation(), p, (int) TerrainManager.getFaceYaw(((Directional) sign.getData()).getFacing().getOppositeFace()), false);
                                         if(test)
                                         {
                                         TerrainManager tm = new TerrainManager(wep, p);
