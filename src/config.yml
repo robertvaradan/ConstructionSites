@@ -2,12 +2,17 @@ CS:
   # The percentage of the build cost. This is subtracted from the player when he first makes the site, and only given back if he finishes the site.
   Advance: 0.25
   Prefs:
+    # ScanColors -> Enabled: When a building is being scanned, should it visualize it?
+    # ScanColors -> Timeout: How long should it wait before removing the visualization? (20 = 1 second)
+    ScanColors:
+      Enabled: true
+      Timeout: 100
     Pasting:
-      # The X, Y, Z scan offsets. In this example, the borders of the building must be at least two blocks away from any no-build WorldGuard regions for the site to be built.
-      Offset:
-        X: 2.0
-        Y: 2.0
-        Z: 2.0
+    # The X, Y, Z scan offsets. In this example, the borders of the building must be at least two blocks away from any no-build WorldGuard regions for the site to be built.
+    Offset:
+      X: 2.0
+      Y: 2.0
+      Z: 2.0
   # The names of the sites you add with /con admin addsite. This line will not appear in your config initially. The four listed names are only examples.
   Names: []
   # The details for each site are below. These are also auto-generated when you add the sites.

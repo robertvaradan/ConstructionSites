@@ -1,7 +1,8 @@
-package com.Hand.Sites.Core;
+package com.ColonelHedgehog.Sites.Services;
 
-import com.Hand.CSAPI.Events.SiteCompleteEvent;
-import com.Hand.CSAPI.Events.SiteFinishEvent;
+
+import com.ColonelHedgehog.CSAPI.Events.SiteCompleteEvent;
+import com.ColonelHedgehog.CSAPI.Events.SiteFinishEvent;
 import com.sk89q.worldedit.EmptyClipboardException;
 import com.sk89q.worldedit.FilenameException;
 import com.sk89q.worldedit.MaxChangedBlocksException;
@@ -26,24 +27,21 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class CSCountTask extends BukkitRunnable 
+@SuppressWarnings("deprecation")
+public class CSCountTask extends BukkitRunnable
 {
- 
+
     private final JavaPlugin plugin;
- 
+
     private int counter;
     private Location signloc;
     private UUID uuid;
     private int bt;
- 
-    public CSCountTask(JavaPlugin plugin, Location loc, UUID uuid) 
+
+    public CSCountTask(JavaPlugin plugin, Location loc, UUID uuid)
     {
         this.plugin = plugin;
-        if (loc.getBlock().getType() != Material.SIGN && loc.getBlock().getType() != Material.WALL_SIGN && loc.getBlock().getType() != Material.SIGN_POST)
-        {
-            //Bukkit.broadcastMessage("&sect;6ERROR WITH SIGN! NOT EXIST ONOES");
-        }
-        else
+        if (loc.getBlock().getType() == Material.SIGN || loc.getBlock().getType() == Material.WALL_SIGN || loc.getBlock().getType() == Material.SIGN_POST)
         {
             //Bukkit.broadcastMessage("§cIt's working! " + counter);
             this.counter = CSTime.getDurationBreakdownToTicks(((Sign) loc.getBlock().getState()).getLine(1).replace("§b", ""));
@@ -53,53 +51,54 @@ public class CSCountTask extends BukkitRunnable
         }
     }
 
+    @SuppressWarnings("deprecation")
     @Override
-    public void run() 
+    public void run()
     {
         // What you want to schedule goes here
-        if(signloc == null)
+        if (signloc == null)
         {
             this.cancel();
         }
         else
         {
-        
-            if (counter > 0 && (signloc.getBlock().getType() == Material.SIGN || signloc.getBlock().getType() == Material.SIGN_POST || signloc.getBlock().getType() == Material.WALL_SIGN)) 
-            { 
+
+            if (counter > 0 && (signloc.getBlock().getType() == Material.SIGN || signloc.getBlock().getType() == Material.SIGN_POST || signloc.getBlock().getType() == Material.WALL_SIGN))
+            {
                 Sign s = (Sign) signloc.getBlock().getState();
                 int signticks = CSTime.getDurationBreakdownToTicks(s.getLine(1).replace("§b", ""));
                 counter = ((signticks) - 20);
-                    try 
-                    {                        
-                        File file = new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + s.getLine(3).replace("§3", "") + "_" + s.getLine(1).replace("§b", "").replace(":", "-") + ".schematic");
-                        if(file.exists() && Bukkit.getPlayer(uuid) != null && Bukkit.getPlayer(uuid).isOnline())
-                        {
-                            //Bukkit.broadcastMessage("File existed, so placing " + file.toString());
-                            WorldEditPlugin wep = (WorldEditPlugin)Bukkit.getPluginManager().getPlugin("WorldEdit");
-                            Player p = Bukkit.getPlayer(uuid);
-                            TerrainManager tm = new TerrainManager(wep, Bukkit.getPlayer(uuid));
-                            tm.loadSchematic(file, signloc, p, (int) TerrainManager.getFaceYaw(((Directional) s.getData()).getFacing().getOppositeFace()), true);
-                        }
-                    }
-                    catch (IOException | DataException | FilenameException | MaxChangedBlocksException | EmptyClipboardException ex) 
+                try
+                {
+                    File file = new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + s.getLine(3).replace("§3", "") + "_" + s.getLine(1).replace("§b", "").replace(":", "-") + ".schematic");
+                    if (file.exists() && Bukkit.getPlayer(uuid) != null && Bukkit.getPlayer(uuid).isOnline())
                     {
-                        Logger.getLogger(CSCountTask.class.getName()).log(Level.SEVERE, null, ex);
+                        //Bukkit.broadcastMessage("File existed, so placing " + file.toString());
+                        WorldEditPlugin wep = (WorldEditPlugin) Bukkit.getPluginManager().getPlugin("WorldEdit");
+                        Player p = Bukkit.getPlayer(uuid);
+                        CSBuilder tm = new CSBuilder(wep, Bukkit.getPlayer(uuid));
+                        tm.loadSchematic(file, signloc, p, (int) CSBuilder.getFaceYaw(((Directional) s.getData()).getFacing().getOppositeFace()), true);
                     }
-                
+                }
+                catch (IOException | DataException | FilenameException | MaxChangedBlocksException | EmptyClipboardException ex)
+                {
+                    Logger.getLogger(CSCountTask.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
                 s.setLine(1, "§b" + CSTime.getDurationBreakdown(counter));
                 s.update();
                 Location loc = s.getLocation();
 
-                List<String> processes = (List<String>) plugin.getConfig().getList("Processes");
-                if(processes != null && !processes.isEmpty() && !processes.contains(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ() + "," + uuid))
+                List<String> processes = plugin.getConfig().getStringList("Processes");
+                if (processes != null && !processes.isEmpty() && !processes.contains(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ() + "," + uuid))
                 {
-                processes.add(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ() + "," + uuid);
-                plugin.saveConfig();
+                    processes.add(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ() + "," + uuid);
+                    plugin.saveConfig();
                 }
 
                 //Bukkit.broadcastMessage("§bCountingDown! " + counter);
-            } 
-            else if(counter <= 0 && (signloc.getBlock().getType() == Material.SIGN || signloc.getBlock().getType() == Material.SIGN_POST || signloc.getBlock().getType() == Material.WALL_SIGN))
+            }
+            else if (counter <= 0 && (signloc.getBlock().getType() == Material.SIGN || signloc.getBlock().getType() == Material.SIGN_POST || signloc.getBlock().getType() == Material.WALL_SIGN))
             {
                 Sign s = (Sign) signloc.getBlock().getState();
                 s.setLine(1, "§aCompleted");
@@ -107,8 +106,11 @@ public class CSCountTask extends BukkitRunnable
 
 
                 // Legacy
-                SiteCompleteEvent event = new SiteCompleteEvent(s.getLine(3), Bukkit.getPlayer(uuid));
-                Bukkit.getServer().getPluginManager().callEvent(event);
+                if (s.getLine(3) != null && Bukkit.getPlayer(uuid) != null)
+                {
+                    SiteCompleteEvent event = new SiteCompleteEvent(s.getLine(3), Bukkit.getPlayer(uuid));
+                    Bukkit.getServer().getPluginManager().callEvent(event);
+                }
 
                 // New, better
 
@@ -132,8 +134,8 @@ public class CSCountTask extends BukkitRunnable
                 //Bukkit.broadcastMessage("§aDone! " + counter);
                 Location loc = signloc;
 
-                List<String> processes = (List<String>) plugin.getConfig().getList("Processes");
-                if(processes != null && !processes.isEmpty() && processes.contains(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ()))
+                List<String> processes = plugin.getConfig().getStringList("Processes");
+                if (processes != null && !processes.isEmpty() && processes.contains(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ()))
                 {
                     processes.remove(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ() + "," + uuid);
                     plugin.saveConfig();
@@ -142,11 +144,11 @@ public class CSCountTask extends BukkitRunnable
             }
             else
             {
-            Location loc = signloc;
+                Location loc = signloc;
 
-            List<String> processes = (List<String>) plugin.getConfig().getList("Processes");
+                List<String> processes = plugin.getConfig().getStringList("Processes");
 
-                if(processes != null && !processes.isEmpty() && processes.contains(loc.getWorld() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ() + "," + uuid))
+                if (processes != null && !processes.isEmpty() && processes.contains(loc.getWorld() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ() + "," + uuid))
                 {
                     processes.remove(loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ() + "," + uuid);
                     plugin.saveConfig();
@@ -158,5 +160,5 @@ public class CSCountTask extends BukkitRunnable
             //Bukkit.broadcastMessage("§6Runner! " + counter);
         }
     }
- 
+
 }

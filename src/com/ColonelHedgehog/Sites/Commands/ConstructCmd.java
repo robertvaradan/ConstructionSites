@@ -4,24 +4,16 @@
  * and open the template in the editor.
  */
 
-package com.Hand.Sites.Commands;
+package com.ColonelHedgehog.Sites.Commands;
 
-import com.Hand.CSAPI.ConstructionSite;
-import com.Hand.Sites.Core.CSCountTask;
-import com.Hand.Sites.Core.URLServices.DLC;
-import com.Hand.Sites.Main.Main;
-import com.Hand.Sites.Main.Prefs;
-import com.sk89q.worldedit.CuboidClipboard;
-import com.sk89q.worldedit.EditSession;
-import com.sk89q.worldedit.MaxChangedBlocksException;
-import com.sk89q.worldedit.Vector;
-import com.sk89q.worldedit.bukkit.BukkitWorld;
-import com.sk89q.worldedit.data.DataException;
-import com.sk89q.worldedit.schematic.SchematicFormat;
+import com.ColonelHedgehog.CSAPI.ConstructionSite;
+import com.ColonelHedgehog.Sites.Core.ConstructionSites;
+import com.ColonelHedgehog.Sites.Services.CSCountTask;
+import com.ColonelHedgehog.Sites.Services.CommandMenu;
+import com.ColonelHedgehog.Sites.Services.URLServices.DLC;
+import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.block.BlockFace;
-import org.bukkit.block.Sign;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -29,12 +21,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static com.Hand.Sites.Main.Main.Prefix;
+import static com.ColonelHedgehog.Sites.Core.ConstructionSites.Prefix;
 
 /**
  *
@@ -42,15 +33,15 @@ import static com.Hand.Sites.Main.Main.Prefix;
  */
 public class ConstructCmd implements CommandExecutor
 {
-    public static Main plugin = Main.plugin;
+    private static ConstructionSites plugin = ConstructionSites.plugin;
     
     
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, final String[] args) 
     {
-        if(cmd.getName().equalsIgnoreCase("construct") && sender instanceof Player)
+        if(sender instanceof Player)
         {
-            List<String> list = (List<String>) plugin.getConfig().getList("CS.Names");
+            List<String> list = plugin.getConfig().getStringList("CS.Names");
             if(list == null)
             {
                 List<String> empty = new ArrayList<>();
@@ -77,7 +68,7 @@ public class ConstructCmd implements CommandExecutor
                                     {
                                     list.add(args[2].toLowerCase());
                                     }
-                                    
+
                                     p.sendMessage(Prefix + "§aSuccessfully added \"§b" + args[2].toLowerCase() + "§a.\"");
                                     plugin.getConfig().set("CS." + args[2].toLowerCase() + ".Time", args[3]);
                                     plugin.getConfig().set("CS." + args[2].toLowerCase() + ".Cost", Double.parseDouble(args[4].replace("$", "")));
@@ -120,19 +111,37 @@ public class ConstructCmd implements CommandExecutor
                         p.sendMessage(Prefix + "§cPlease choose an action.");
                     }
                 }
-                if(args[0].equalsIgnoreCase("scan") && getAllowedBuildSite(p, args[1].toLowerCase()))
+                else if (args[0].equalsIgnoreCase("scan"))
                 {
-                    ConstructionSite.scanBuildArea(p.getLocation(), args[1], p);
+                    if(p.hasPermission("csites.scan"))
+                    {
+                        if(args.length > 1)
+                        {
+                            if (getAllowedBuildSite(p, args[1].toLowerCase()))
+                            {
+                                p.sendMessage(ConstructionSites.Prefix + "§aScanning for site \"§e" + args[1] + "§a.\"");
+                                ConstructionSite.scanBuildArea(p.getLocation(), args[1], p);
+                            }
+                            else if (args[0].equalsIgnoreCase("scan"))
+                            {
+                                p.sendMessage(Prefix + "§cYou can't scan for this area!");
+                            }
+                        }
+                        else
+                        {
+                            p.sendMessage(ConstructionSites.Prefix + "§cToo few arguments! Usage: §e/construct scan §a<site>");
+                        }
+                    }
+                    else
+                    {
+                        p.sendMessage(ConstructionSites.Prefix + "§cInsufficient permissions!");
+                    }
                 }
-                else if(args[0].equalsIgnoreCase("scan"))
-                {
-                    p.sendMessage(Prefix + "§cYou can't scan for this area!");
-                }
-                if(args[0].equalsIgnoreCase("build"))
+                else if(args[0].equalsIgnoreCase("build"))
                 {
                     if(args.length >= 2)
                     {
-                        ConstructionSite s = new ConstructionSite(p.getLocation(), p.getUniqueId(), args[1], Prefix, false);
+                        ConstructionSite s = new ConstructionSite(p.getLocation(), p.getUniqueId(), args[1].toLowerCase(), Prefix, false);
                     }
                     else
                     {
@@ -149,29 +158,72 @@ public class ConstructCmd implements CommandExecutor
                 }
                 else if(args[0].equalsIgnoreCase("install"))
                 {
-                    if(p.hasPermission("csites.admin") && args.length >= 1)
-                    {                        
-                        File pack = new File(plugin.getDataFolder().getParent() + "/" + args[1]);
-                        
-                        if(pack.exists())
+                    if(p.hasPermission("csites.admin"))
+                    {
+                        if(args.length > 1)
                         {
-                            p.sendMessage(Prefix + "Installing package...");
-                            
-                            if(DLC.installPackage(pack))
+                            File pack = new File(plugin.getDataFolder().getParent() + "/" + args[1]);
+
+                            if(pack.exists())
                             {
-                                p.sendMessage(Prefix + "§aSuccess!");
+                                p.sendMessage(Prefix + "Installing package...");
+
+                                if(DLC.installPackage(pack))
+                                {
+                                    p.sendMessage(Prefix + "§aSuccess!");
+                                }
+                                else
+                                {
+                                    p.sendMessage(Prefix + "§cAn error occurred. Check your console for details.");
+                                }
                             }
                             else
                             {
-                                p.sendMessage(Prefix + "§cError ocurred. No CSPack by that name found!.");
+                                p.sendMessage(Prefix + "§cError occurred. No CSPack by that name found!");
                             }
                         }
+                        else
+                        {
+                            p.sendMessage(ConstructionSites.Prefix + "§cToo few arguments! §eUsage: §a/construct install [package]");
+                        }
                     }
+                    else
+                    {
+                        p.sendMessage(ConstructionSites.Prefix + "§cInsufficient permissions!");
+                    }
+                }
+                else if(args[0].equalsIgnoreCase("reload"))
+                {
+                    if(p.hasPermission("csites.admin"))
+                    {
+                        plugin.reloadConfig();
+                        p.sendMessage(ConstructionSites.Prefix + "§aReloaded.");
+                    }
+                }
+                else if(args[0].equalsIgnoreCase("help"))
+                {
+                    p.sendMessage(ConstructionSites.Prefix + "§e========== §6/construct - Command Usage §e==========");
+                    p.sendMessage("§8» §e/construct §7- Displays an inventory menu with all available options.");
+                    p.sendMessage("§4§lADMIN §eCommands:");
+                    p.sendMessage("§8» §e/construct §6admin addsite [site name] [hours:minutes:seconds] [cost.tobuild] §7- Adds a construction site by the name of its corresponding schematic: name, time, cost.");
+                    p.sendMessage("§8» §e/construct §6admin delsite [site name] §7- Deletes a site.");
+                    p.sendMessage("§8» §e/construct reload §7- Reloads the config.");
+                    p.sendMessage("§b§lPLAYER §eCommands:");
+                    p.sendMessage("§8» §e/construct §6build §7- Displays all buildings you can create.");
+                    p.sendMessage("§8» §e/construct §6build [site name] §7- Creates a construction site matching the given name.");
+                    p.sendMessage("§8» §e/construct §6scan [site name] §7- Scans an area to see if you're allowed to build in it based on the given site name.");
+
+                }
+                else
+                {
+                    p.sendMessage(ConstructionSites.Prefix + "§cNo subcommand could be matched to \"§6" + args[0] + "§c\". §cUse §e/construct help §cfor help.");
                 }
             }
             else
             {
-                p.sendMessage(Prefix + "§4Too few arguments. §6/construct build§e, §6/construct admin§e, §6/construct install§e.");
+                CommandMenu menu = new CommandMenu(p);
+                menu.createCommandMenu();
+                //p.sendMessage(Prefix + "§4Too few arguments. §6/construct build§e, §6/construct admin§e, §6/construct install§e.");
             }
         }
         return false;
@@ -181,73 +233,36 @@ public class ConstructCmd implements CommandExecutor
     {
         return plugin.getConfig().contains("CS." + name.toLowerCase()) && p.hasPermission("csites.build." + name.toLowerCase());
     }
-    
-    public static void pasteSchematic(final World world, final File file, final Vector origin, final Player p, Sign b) //throws DataException, IOException, MaxChangedBlocksException
-    {
-            try //throws DataException, IOException, MaxChangedBlocksException
-                {
-                    //p.sendMessage("§7DEBUG: §eTrying to paste.");
-                
-                    EditSession es = new EditSession(new BukkitWorld(world), 999999999);
-                    SchematicFormat schematic = SchematicFormat.getFormat(file);
 
-                    CuboidClipboard cc = schematic.load(file);                   
-                    
-/*                    if(b != null)
-                    {
-                        cc.rotate2D((int) b.getLocation().getYaw());                        
-                    }
-                    else
-                    {
-                        cc.rotate2D((int) p.getLocation().getYaw());
-                    }*/
-                    // BaseBlock data = cc.getBlock(origin);
-                    boolean resolved = false;
-
-                    int x = (cc.getWidth() + 1) / 2;
-                    int y = (cc.getHeight() + 1) / 2;
-                    int z = (cc.getLength() + 1) / 2;
-
-                    int px = p.getLocation().getBlockX();
-                    int py = p.getLocation().getBlockY();   
-                    int pz = p.getLocation().getBlockZ();
-                    //p.sendMessage("§7DEBUG: §eFor loop.");
-
-
-                    for(Location loc : scanForArea(p.getLocation().getBlock().getLocation(), x, y, z, Prefs.bsox + cc.getOffset().getBlockX(), Prefs.bsoy + cc.getOffset().getBlockY(), Prefs.bsoz + + cc.getOffset().getBlockZ()))
-                    {
-                        //p.sendMessage("§7DEBUG: §aScanning area: §6" + loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ() + ".");
-                        if(!locationCanBuild(loc, p) && !resolved)
-                        {
-                                p.sendMessage(Prefix + "§4ERROR: §6Could not create Construction site. It overlaps a region you don't have access to.");
-                                resolved = true;
-                        }
-                        else if(locationCanBuild(loc, p) && !resolved)
-                        {
-                            p.sendMessage(Prefix + "§aBuilding created.");
-
-                            cc.place(es, origin, false);
-                            resolved = true;
-                        }
-                    }
-                } catch (DataException | IOException | MaxChangedBlocksException ex) {
-                    System.out.println(Prefix + "An error ocurred when player " + p.getName() + "attempted to create a construction site. Exception: " + ex.getMessage());
-                    p.sendMessage("Exception! Oh noes: " + ex.getMessage());
-                }
-        }
 
     public static boolean locationCanBuild(Location loc, Player p)
     {
         boolean whether = true;
-        if(Main.getWorldGuard() != null && Main.getWorldGuard().getRegionManager(loc.getWorld()).getApplicableRegions(loc) != null)
+        if(ConstructionSites.getWorldGuard() != null && ConstructionSites.getWorldGuard().getRegionManager(loc.getWorld()).getApplicableRegions(loc) != null)
         {
-            Boolean set = Main.getWorldGuard().getRegionManager(loc.getWorld()).getApplicableRegions(loc).canBuild(Main.getWorldGuard().wrapPlayer(p));
-        
+            Boolean set = ConstructionSites.getWorldGuard().getRegionManager(loc.getWorld()).getApplicableRegions(loc).canBuild(ConstructionSites.getWorldGuard().wrapPlayer(p));
+
             if(!set)
             {
                 whether = false;
             }
         }
+
+        if(plugin.getServer().getPluginManager().getPlugin("GriefPrevention") != null)
+        {
+            if (GriefPrevention.instance.dataStore.getClaimAt(loc, true, null) != null)
+            {
+                if (GriefPrevention.instance.dataStore.getClaimAt(loc, true, null).getOwnerName().equalsIgnoreCase(p.getName()))
+                {
+
+                }
+                else
+                {
+                    whether = false;
+                }
+            }
+        }
+
         
         return whether;
     }
@@ -318,6 +333,6 @@ public class ConstructCmd implements CommandExecutor
 
     public static void signCountDown(Location loc, UUID uuid) 
     {
-        BukkitTask task = new CSCountTask(Main.getProvidingPlugin(Main.class), loc, uuid).runTaskTimer(ConstructCmd.plugin, 20, 20);
+        BukkitTask task = new CSCountTask(ConstructionSites.getProvidingPlugin(ConstructionSites.class), loc, uuid).runTaskTimer(ConstructCmd.plugin, 20, 20);
     }
 }

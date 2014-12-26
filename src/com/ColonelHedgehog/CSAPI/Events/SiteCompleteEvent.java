@@ -1,4 +1,4 @@
-package com.Hand.CSAPI.Events;
+package com.ColonelHedgehog.CSAPI.Events;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -21,7 +21,15 @@ public class SiteCompleteEvent extends Event
     public SiteCompleteEvent(String sitename, Player creator)
     {
         this.sitename = sitename;
-        this.creator = creator.getUniqueId();
+        if (creator != null)
+        {
+            this.creator = creator.getUniqueId();
+        }
+    }
+
+    public static HandlerList getHandlerList()
+    {
+        return handlers;
     }
 
     public Player getCreator()
@@ -35,11 +43,6 @@ public class SiteCompleteEvent extends Event
     }
 
     public HandlerList getHandlers()
-    {
-        return handlers;
-    }
-
-    public static HandlerList getHandlerList()
     {
         return handlers;
     }

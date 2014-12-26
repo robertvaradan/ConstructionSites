@@ -4,16 +4,15 @@
  * and open the template in the editor.
  */
 
-package com.Hand.Sites.Main;
+package com.ColonelHedgehog.Sites.Core;
 
 /**
- *
  * @author Robert
  */
-public class PluginServices 
+public class PluginServices
 {
-    public static Main plugin = Main.plugin;
-    
+    private static ConstructionSites plugin = ConstructionSites.plugin;
+
     public static boolean isInstalled(String input)
     {
         return plugin.getServer().getPluginManager().getPlugin(input) != null;

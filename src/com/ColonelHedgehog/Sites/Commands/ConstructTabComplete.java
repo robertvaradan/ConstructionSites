@@ -4,16 +4,17 @@
  * and open the template in the editor.
  */
 
-package com.Hand.Sites.Commands;
+package com.ColonelHedgehog.Sites.Commands;
 
-import com.Hand.Sites.Main.Main;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import com.ColonelHedgehog.Sites.Core.ConstructionSites;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -21,7 +22,7 @@ import org.bukkit.entity.Player;
  */
 public class ConstructTabComplete implements TabCompleter 
 {
-    public static Main plugin = Main.plugin;
+    private static ConstructionSites plugin = ConstructionSites.plugin;
     
     @Override
     public List<String> onTabComplete(CommandSender sender, Command cmd, String alias, String[] args) {
@@ -33,12 +34,11 @@ public class ConstructTabComplete implements TabCompleter
             if(sender instanceof Player)
             {
                 Player p = (Player) sender;
-                
-                List<String> list = (List<String>) plugin.getConfig().getList("CS.Names");
+
+                List<String> list =  plugin.getConfig().getStringList("CS.Names");
                 if(list == null)
                 {
-                    List<String> empty = new ArrayList<>();
-                    list = empty;
+                    list = new ArrayList<>();
                 }
                 
                 List<String> newList = new ArrayList<>();
@@ -61,13 +61,26 @@ public class ConstructTabComplete implements TabCompleter
                 File f = new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics");
                 
                 List<String> list = new ArrayList<>();
-                
-                for(File file : f.listFiles())
+
+                File[] files = f.listFiles();
+                if (files != null)
                 {
-                    list.add(file.getName().replace(".schematic", ""));
+                    for (File file : files)
+                    {
+                        if(args.length > 2)
+                        {
+                            if (file.getName().startsWith(args[2]))
+                            {
+                                list.add(file.getName().replace(".schematic", ""));
+                            }
+                        }
+                        else
+                        {
+                            list.add(file.getName().replace(".schematic", ""));
+                        }
+                    }
+                    return list;
                 }
-                
-                return list;
             }
         }
     }

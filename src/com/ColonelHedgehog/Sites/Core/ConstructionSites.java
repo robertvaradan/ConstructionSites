@@ -4,12 +4,14 @@
  * and open the template in the editor.
  */
 
-package com.Hand.Sites.Main;
+package com.ColonelHedgehog.Sites.Core;
 
-import com.Hand.Sites.Commands.ConstructCmd;
-import com.Hand.Sites.Commands.ConstructTabComplete;
-import com.Hand.Sites.Core.URLServices.DLC;
-import com.Hand.Sites.Events.PlayerInteract;
+import com.ColonelHedgehog.Sites.Commands.ConstructCmd;
+import com.ColonelHedgehog.Sites.Commands.ConstructTabComplete;
+import com.ColonelHedgehog.Sites.Events.InventoryClick;
+import com.ColonelHedgehog.Sites.Events.PlayerCommandPreProcess;
+import com.ColonelHedgehog.Sites.Events.PlayerInteract;
+import com.ColonelHedgehog.Sites.Services.URLServices.DLC;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
@@ -20,65 +22,67 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 
 /**
- *
  * @author Robert
  */
-public class Main extends JavaPlugin
+public class ConstructionSites extends JavaPlugin
 {
-    public static Main plugin;
+    public static com.ColonelHedgehog.Sites.Core.ConstructionSites plugin;
     public static Plugin ConstructionSites;
     public static String Prefix = "§8[§eConstruction§6Sites§8]§f: ";
     public static Economy economy;
-    
+
     @Override
     public void onEnable()
     {
         plugin = this;
         ConstructionSites = Bukkit.getPluginManager().getPlugin("ConstructionSites");
-        
+
         Prefs.configTasks();
-        
+
         plugin.getCommand("construct").setExecutor(new ConstructCmd());
-        
+
         plugin.getCommand("construct").setTabCompleter(new ConstructTabComplete());
         setupEconomy();
-        
+
         plugin.getServer().getPluginManager().registerEvents(new PlayerInteract(), this);
-        
-        if(!PluginServices.isInstalled("WorldEdit") || !PluginServices.isInstalled("WorldGuard") || !PluginServices.isInstalled("Vault"))
+        plugin.getServer().getPluginManager().registerEvents(new PlayerCommandPreProcess(), this);
+        plugin.getServer().getPluginManager().registerEvents(new InventoryClick(), this);
+
+        if (!PluginServices.isInstalled("WorldEdit") || !PluginServices.isInstalled("WorldGuard") || !PluginServices.isInstalled("Vault"))
         {
-            System.out.println("[ConstructionSites] PLUGIN BREAK! Not all necessary plugins were found. WorldEdit: " + PluginServices.isInstalled("WorldEdit") + ". WorldGuard: " + PluginServices.isInstalled("WorldGUard") + ". Vault: " + PluginServices.isInstalled("Vault"));
+            System.out.println("[ConstructionSites] PLUGIN BREAK! Not all necessary plugins were found. WorldEdit: " + PluginServices.isInstalled("WorldEdit") + ". WorldGuard: " + PluginServices.isInstalled("WorldGuard") + ". Vault: " + PluginServices.isInstalled("Vault"));
             plugin.setEnabled(false);
         }
-        
+
         CSConfigManager.resumeBuildProcesses();
         startupPackInstall();
-        
-        
+
+
         // Go away, metalmikey002.
     }
-    
+
     @Override
     public void onDisable()
     {
-        
+
     }
-    
-    public static WorldGuardPlugin getWorldGuard() 
+
+    public static WorldGuardPlugin getWorldGuard()
     {
         Plugin wgplugin = plugin.getServer().getPluginManager().getPlugin("WorldGuard");
         // WorldGuard may not be loaded
-        if (wgplugin == null || !(wgplugin instanceof WorldGuardPlugin)) {
+        if (wgplugin == null || !(wgplugin instanceof WorldGuardPlugin))
+        {
             return null; // Maybe you want throw an exception instead
         }
 
         return (WorldGuardPlugin) wgplugin;
-    }    
+    }
 
     private boolean setupEconomy()
     {
         RegisteredServiceProvider<Economy> economyProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
-        if (economyProvider != null) 
+        if (economyProvider != null)
         {
             economy = economyProvider.getProvider();
         }
@@ -86,19 +90,19 @@ public class Main extends JavaPlugin
         return (economy != null);
     }
 
-    private void startupPackInstall() 
+    private void startupPackInstall()
     {
 
-        for(File pack : new File(plugin.getDataFolder().getParent()).listFiles())
+        for (File pack : new File(plugin.getDataFolder().getParent()).listFiles())
         {
-            if(pack.getName().endsWith("#cspack"))
+            if (pack.getName().endsWith("#cspack"))
             {
-            System.out.println("[CS | CNP] Found CSPack at " + pack.toString());
-                if(pack.exists()) // Uh...? Why am I checking for this? ono phail
+                System.out.println("[CS | CNP] Found CSPack at " + pack.toString());
+                if (pack.exists()) // Uh...? Why am I checking for this? ono phail
                 {
                     System.out.println("[CS | CNP] Installing package...");
 
-                    if(DLC.installPackage(pack))
+                    if (DLC.installPackage(pack))
                     {
                         System.out.println("[CS | CNP] Successfully installed files.");
                     }
@@ -111,5 +115,5 @@ public class Main extends JavaPlugin
         }
     }
 
-    
+
 }

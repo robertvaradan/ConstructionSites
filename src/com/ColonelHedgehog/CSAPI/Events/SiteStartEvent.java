@@ -1,4 +1,4 @@
-package com.Hand.CSAPI.Events;
+package com.ColonelHedgehog.CSAPI.Events;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -24,6 +24,11 @@ public class SiteStartEvent extends Event
         this.sitetime = sitetime;
         this.cost = cost;
         this.loc = location;
+    }
+
+    public static HandlerList getHandlerList()
+    {
+        return handlers;
     }
 
     public Player getCreatorAsPlayer()
@@ -57,11 +62,6 @@ public class SiteStartEvent extends Event
     }
 
     public HandlerList getHandlers()
-    {
-        return handlers;
-    }
-
-    public static HandlerList getHandlerList()
     {
         return handlers;
     }
