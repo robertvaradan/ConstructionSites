@@ -13,11 +13,7 @@ import com.ColonelHedgehog.Sites.Core.Prefs;
 import com.ColonelHedgehog.Sites.Services.BuildSounds;
 import com.ColonelHedgehog.Sites.Services.CSBuilder;
 import com.ColonelHedgehog.Sites.Services.CSTime;
-import com.sk89q.worldedit.EmptyClipboardException;
-import com.sk89q.worldedit.FilenameException;
-import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
-import com.sk89q.worldedit.data.DataException;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -26,7 +22,6 @@ import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -73,29 +68,33 @@ public class ConstructionSite
                 try
                 {
                     WorldEditPlugin wep = (WorldEditPlugin) Bukkit.getPluginManager().getPlugin("WorldEdit");
+                    File file = new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + name1.toLowerCase() + ".schematic");
+
+                    if (!file.exists())
+                    {
+                        player.sendMessage(ConstructionSites.Prefix + "§4FATAL: §eSite is registered but no matching schematic could be loaded. Might it have been deleted?");
+                        return;
+                    }
+
                     CSBuilder tm = new CSBuilder(wep, player);
-                    boolean test = tm.testLoadSchematic(new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + name1.toLowerCase() + ".schematic"), loc1, player, (int) CSBuilder.getFaceYaw(CSBuilder.getPlayerDirection(loc1).getOppositeFace()), false);
+
+
+                    boolean test = tm.testLoadSchematic(file, loc1, player, (int) CSBuilder.getFaceYaw(CSBuilder.getPlayerDirection(loc1).getOppositeFace()), false);
                     if(!test)
                     {
-                        player.sendMessage(ConstructionSites.Prefix + "§6Results are in: §cYou can't build here. §6It overlaps a region you can't build in.");
+                        player.sendMessage(ConstructionSites.Prefix + "§6Results: §cYou can't build here. §6It overlaps a protected area.");
                     }
                     else
                     {
-                        player.sendMessage(ConstructionSites.Prefix + "§eResults are in: §aYou can build here. §eNo restricted regions are nearby.");
+                        player.sendMessage(ConstructionSites.Prefix + "§eResults: §aYou can build here. §eNo restricted regions are nearby.");
                     }
                 }
-                catch (FilenameException | DataException | IOException | MaxChangedBlocksException | EmptyClipboardException ex)
+                catch (Exception ex)
                 {
                     Logger.getLogger(ConstructionSite.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         }, 20L);
-    }
-
-    public static boolean testMethod()
-    {
-        // All good!
-        return true;
     }
 
     private void makeBuildSite()
@@ -118,7 +117,6 @@ public class ConstructionSite
                 try
                 {
                     WorldEditPlugin wep = (WorldEditPlugin) Bukkit.getPluginManager().getPlugin("WorldEdit");
-                    CSBuilder tm = new CSBuilder(wep, p);
                     File scanf = new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + name.toLowerCase() + ".schematic");
 
                     if(!scanf.exists())
@@ -126,6 +124,8 @@ public class ConstructionSite
                         p.sendMessage(ConstructionSites.Prefix + "§4FATAL: §eSite is registered but no matching schematic could be loaded. Might it have been deleted?");
                         return;
                     }
+
+                    CSBuilder tm = new CSBuilder(wep, p);
 
                     p.sendMessage(Prefix + "§aScanning build area...");
                     boolean test = tm.testLoadSchematic(scanf, loc, p, (int) CSBuilder.getFaceYaw(CSBuilder.getPlayerDirection(loc).getOppositeFace()), Prefs.particles);
@@ -170,7 +170,7 @@ public class ConstructionSite
                                         p.sendMessage(ConstructionSites.Prefix + "§eSite built. Your building will be completed in §a" + strang + ". §eThe total building cost will be §a$" + cost + ".");
                                         if(Prefs.ac != 0)
                                         {
-                                            p.sendMessage(Prefix + "§6An advance of §a$" + cost / Prefs.ac + " §6has been taken from your account.");
+                                            p.sendMessage(Prefix + "§6An advance of §a$" + cost * Prefs.ac + " §6has been taken from your account.");
                                         }
                                         p.sendMessage(Prefix + "§6This cost will be returned upon the building's completion.");
                                         economy.withdrawPlayer(p, cost / Prefs.ac);
@@ -224,7 +224,7 @@ public class ConstructionSite
                         p.sendMessage(Prefix + "§4ERROR: §6Could not create construction site. It overlaps a region you can't build in.");
                     }
                 }
-                catch (FilenameException | DataException | IOException | MaxChangedBlocksException | EmptyClipboardException ex)
+                catch (Exception ex)
                 {
                     Logger.getLogger(ConstructCmd.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -243,7 +243,7 @@ public class ConstructionSite
                         BuildSounds.playBuildSound(BuildSounds.BuildSound.SITE_BUILT, loc, null);
                     }
                 }
-                catch (FilenameException | DataException | IOException | MaxChangedBlocksException | EmptyClipboardException ex)
+                catch (Exception ex)
                 {
                     Logger.getLogger(ConstructCmd.class.getName()).log(Level.SEVERE, null, ex);
                 }

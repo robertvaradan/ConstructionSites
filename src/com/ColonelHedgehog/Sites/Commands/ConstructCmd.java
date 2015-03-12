@@ -11,18 +11,20 @@ import com.ColonelHedgehog.Sites.Core.ConstructionSites;
 import com.ColonelHedgehog.Sites.Services.CSCountTask;
 import com.ColonelHedgehog.Sites.Services.CommandMenu;
 import com.ColonelHedgehog.Sites.Services.URLServices.DLC;
-import me.ryanhamshire.GriefPrevention.GriefPrevention;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.BlockFace;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.ColonelHedgehog.Sites.Core.ConstructionSites.Prefix;
@@ -41,14 +43,9 @@ public class ConstructCmd implements CommandExecutor
     {
         if(sender instanceof Player)
         {
-            List<String> list = plugin.getConfig().getStringList("CS.Names");
-            if(list == null)
-            {
-                List<String> empty = new ArrayList<>();
-                list = empty;
-                plugin.getConfig().set("CS.Names", empty);
-                plugin.saveConfig();
-            }
+            Set<String> list = plugin.getConfig().getConfigurationSection("CS").getKeys(false);
+            list.remove("Prefs");
+            list.remove("Names");
             
             final Player p = (Player) sender;
             
@@ -69,7 +66,7 @@ public class ConstructCmd implements CommandExecutor
                                     list.add(args[2].toLowerCase());
                                     }
 
-                                    p.sendMessage(Prefix + "§aSuccessfully added \"§b" + args[2].toLowerCase() + "§a.\"");
+                                    p.sendMessage(Prefix + "§aSuccessfully added \"§b" + args[2].toLowerCase() + "§a.\" §e Cost: §a$" + args[4] + "§e. Time: §a" + args[3] + "§e.");
                                     plugin.getConfig().set("CS." + args[2].toLowerCase() + ".Time", args[3]);
                                     plugin.getConfig().set("CS." + args[2].toLowerCase() + ".Cost", Double.parseDouble(args[4].replace("$", "")));
                                     plugin.saveConfig();
@@ -150,7 +147,7 @@ public class ConstructCmd implements CommandExecutor
                         {
                             if(getAllowedBuildSite(p, site))
                             {
-                                p.sendMessage("§6- " + site + ", §a$" + plugin.getConfig().getDouble("CS." + site + ".Cost"));
+                                p.sendMessage("§6- §a" + site + "§6, §a$" + plugin.getConfig().getDouble("CS." + site + ".Cost") + "§6, §a" + plugin.getConfig().getString("CS." + site + ".Time"));
                             }
                         }
 
@@ -237,10 +234,10 @@ public class ConstructCmd implements CommandExecutor
 
     public static boolean locationCanBuild(Location loc, Player p)
     {
-        boolean whether = true;
-        if(ConstructionSites.getWorldGuard() != null && ConstructionSites.getWorldGuard().getRegionManager(loc.getWorld()).getApplicableRegions(loc) != null)
+        /*boolean whether = true;
+        if(ConstructionSites.getWorldGuard() != null)
         {
-            Boolean set = ConstructionSites.getWorldGuard().getRegionManager(loc.getWorld()).getApplicableRegions(loc).canBuild(ConstructionSites.getWorldGuard().wrapPlayer(p));
+            Boolean set = ConstructionSites.getWorldGuard().canBuild(p, loc.getBlock());
 
             if(!set)
             {
@@ -261,10 +258,11 @@ public class ConstructCmd implements CommandExecutor
                     whether = false;
                 }
             }
-        }
+        }*/
 
-        
-        return whether;
+        BlockBreakEvent bbe = new BlockBreakEvent(loc.getBlock(), p.getPlayer());
+        Bukkit.getPluginManager().callEvent(bbe);
+        return !bbe.isCancelled();
     }
 
     public static List<Location> scanForArea(Location start, int gx, int gy, int gz, int offx, int offy, int offz)

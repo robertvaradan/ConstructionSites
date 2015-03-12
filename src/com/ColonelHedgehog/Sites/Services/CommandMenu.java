@@ -34,7 +34,7 @@ public class CommandMenu
     public CommandMenu(Player p)
     {
         u = p.getUniqueId();
-        sitenames.addAll(plugin.getConfig().getStringList("CS.Names"));
+        sitenames.addAll(plugin.getConfig().getConfigurationSection("CS").getKeys(false));
         menus.put(p.getUniqueId(), this);
     }
 
@@ -62,6 +62,10 @@ public class CommandMenu
         {
             inv.addItem(getItem(ItemType.BUILD));
         }
+        if (p.hasPermission("csites.scan"))
+        {
+            inv.addItem(getItem(ItemType.SCAN));
+        }
         if (p.hasPermission("csites.admin"))
         {
             inv.addItem(getItem(ItemType.ADMIN));
@@ -76,7 +80,13 @@ public class CommandMenu
     {
         Player p = Bukkit.getPlayer(u);
 
-        inv = Bukkit.createInventory(p, 45, "§3C§9S §8> §6Build - " + (index + 1));
+        Inventory inv = createBaseInv(index, p, "§3C§9S §8> §6Build - " + (index + 1));
+        p.openInventory(inv);
+    }
+
+    private Inventory createBaseInv(int index, Player p, String name)
+    {
+        inv = Bukkit.createInventory(p, 45, name);
 
         this.index = index;
         ItemStack left = new ItemStack(Material.SKULL_ITEM, 1, (byte) 3);
@@ -110,31 +120,32 @@ public class CommandMenu
         inv.setItem(44, sep);
 
         //System.out.println("INDEX IS: " + index);
-        for (int i = 35 * index; i < (index > 0 ? 35 * index * 2 : 35); i++)
+        for (int i = 35 * index; sitenames.size() > i && i < (index > 0 ? 35 * index * 2 : 35); i++)
         {
-            if (sitenames.size() > i)
+            String site = sitenames.get(i);
+            boolean cb = ConstructCmd.getAllowedBuildSite(p, site);
+            //System.out.println("DISP: " + site + " CB? " + cb);
+            //plugin.getLogger().info("TESTING FOR " + site + ": " + cb);
+            if (cb)
             {
-                String site = sitenames.get(i);
-                boolean cb = ConstructCmd.getAllowedBuildSite(p, site);
-                //plugin.getLogger().info("TESTING FOR " + site + ": " + cb);
-                if (cb)
-                {
-                    ItemStack cs = new ItemStack(Material.MAP);
-                    ItemMeta cm = cs.getItemMeta();
+                ItemStack cs = new ItemStack(Material.MAP);
+                ItemMeta cm = cs.getItemMeta();
 
-                    cm.setDisplayName("§9" + WordUtils.capitalizeFully(site));
-                    List<String> lore = new ArrayList<>();
-                    lore.add("§6§lDuration: §e" + plugin.getConfig().getString("CS." + site + ".Time"));
-                    lore.add("§6§lCost: §a$" + plugin.getConfig().getString("CS." + site + ".Cost"));
-                    cm.setLore(lore);
-                    cs.setItemMeta(cm);
+                cm.setDisplayName("§9" + WordUtils.capitalizeFully(site));
+                List<String> lore = new ArrayList<>();
+
+                lore.add("§6§lDuration: §e" + plugin.getConfig().getString("CS." + site + ".Time"));
+                lore.add("§6§lCost: §a$" + plugin.getConfig().getString("CS." + site + ".Cost"));
+
+                cm.setLore(lore);
+                cs.setItemMeta(cm);
 
 
-                    inv.addItem(cs);
-                }
+                inv.addItem(cs);
             }
         }
-        p.openInventory(inv);
+
+        return inv;
     }
 
     public void createAdminMenu()
@@ -148,12 +159,8 @@ public class CommandMenu
         sm.setDisplayName("§eManage Sites");
 
         List<String> lore = new ArrayList<>();
-        lore.add("§fClick here to manage all");
-        lore.add("§fof the site this server");
-        lore.add("§fcontains. §aRight-click");
-        lore.add("§fon a site to §cremove§f it,");
-        lore.add("§for §aleft-click §f to add");
-        lore.add("§fbuild stages for it.");
+        lore.add("§fClick here to view and");
+        lore.add("§fdelete existing sites.");
         sm.setLore(lore);
         schems.setItemMeta(sm);
 
@@ -177,29 +184,30 @@ public class CommandMenu
     {
         Material _mat =
                 it == ItemType.BUILD ? Material.STONE_PICKAXE :
+                        it == ItemType.SCAN ? Material.STAINED_GLASS :
                         it == ItemType.ADMIN ? Material.REDSTONE_BLOCK :
 
                                 Material.TNT;
         String _name =
-                it == ItemType.BUILD ? "§6Build" :
+                it == ItemType.BUILD ? "§6Build" : it == ItemType.SCAN ? "§aScan" :
                         it == ItemType.ADMIN ? "§4Admin Center" :
                                 "§cClose Menu";
         List<String> _lore = new ArrayList<>();
 
         if (it == ItemType.BUILD)
         {
-            _lore.add("§7See all available");
-            _lore.add("§7blueprints that you are able");
-            _lore.add("§7to build, then choose one");
-            _lore.add("§7to construct.");
+            _lore.add("§7See all available blueprints");
+            _lore.add("§7that you are able to build");
+            _lore.add("§7then choose one to create");
+            _lore.add("§7a construction site.");
         }
         else if (it == ItemType.SCAN) // Ayy rofl
         {
             _lore.add("§7Select from a list of");
             _lore.add("§7blueprints, then scan the");
-            _lore.add("§7area it is based on your");
-            _lore.add("§7selection to see if you can");
-            _lore.add("§7build there.");
+            _lore.add("§7area around you based on your");
+            _lore.add("§7selection to see if you are");
+            _lore.add("§7allowed to build there.");
         }
         else if (it == ItemType.ADMIN)
         {
@@ -207,7 +215,7 @@ public class CommandMenu
             _lore.add("§7commands to add and delete sites.");
         }
 
-        ItemStack stack = new ItemStack(_mat);
+        ItemStack stack = new ItemStack(_mat, 1, it == ItemType.SCAN ? (byte) 5 : (byte) 0);
         ItemMeta meta = stack.getItemMeta();
         meta.setDisplayName(_name);
         meta.setLore(_lore);
@@ -220,61 +228,7 @@ public class CommandMenu
     {
         Player p = Bukkit.getPlayer(u);
 
-        inv = Bukkit.createInventory(p, 45, "§3C§9S §8> §eManage - " + (index + 1));
-
-        this.index = index;
-        ItemStack left = new ItemStack(Material.SKULL_ITEM, 1, (byte) 3);
-        SkullMeta lsm = (SkullMeta) left.getItemMeta();
-        lsm.setOwner("MHF_ArrowLeft");
-        lsm.setDisplayName("§7§oPrevious");
-        left.setItemMeta(lsm);
-
-        ItemStack right = new ItemStack(Material.SKULL_ITEM, 1, (byte) 3);
-        SkullMeta rsm = (SkullMeta) right.getItemMeta();
-        rsm.setOwner("MHF_ArrowRight");
-        rsm.setDisplayName("§7§oNext");
-        right.setItemMeta(rsm);
-
-        ItemStack sep = new ItemStack(Material.FENCE);
-        ItemMeta sepm = sep.getItemMeta();
-        sepm.setDisplayName("");
-        sep.setItemMeta(sepm);
-        inv.setItem(26, right);
-
-        inv.setItem(0, sep);
-        inv.setItem(9, sep);
-        inv.setItem(27, sep);
-        inv.setItem(36, sep);
-
-        inv.setItem(8, sep);
-        inv.setItem(17, sep);
-        inv.setItem(35, sep);
-        inv.setItem(44, sep);
-
-        //System.out.println("INDEX IS: " + index);
-        for (int i = 35 * index; i < (index > 0 ? 35 * index * 2 : 35); i++)
-        {
-            if (sitenames.size() > i)
-            {
-                String site = sitenames.get(i);
-                boolean cb = ConstructCmd.getAllowedBuildSite(p, site);
-                //plugin.getLogger().info("TESTING FOR " + site + ": " + cb);
-                if (cb)
-                {
-                    ItemStack cs = new ItemStack(Material.MAP);
-                    ItemMeta cm = cs.getItemMeta();
-
-                    cm.setDisplayName("§9" + WordUtils.capitalizeFully(site));
-                    List<String> lore = new ArrayList<>();
-                    lore.add("§6§lDuration: §e" + plugin.getConfig().getString("CS." + site + ".Time"));
-                    lore.add("§6§lCost: §a$" + plugin.getConfig().getString("CS." + site + ".Cost"));
-                    cm.setLore(lore);
-                    cs.setItemMeta(cm);
-
-                    inv.addItem(cs);
-                }
-            }
-        }
+        Inventory inv = createBaseInv(index, p, "§3C§9S §8> §5Manage - " + (index + 1));
         p.openInventory(inv);
     }
 
@@ -282,7 +236,22 @@ public class CommandMenu
     {
         Player p = Bukkit.getPlayer(u);
 
-        inv = Bukkit.createInventory(p, 45, "§3C§9S §8> §eManage - " + (index + 1));
+        Inventory inv = createCreateInv(index, p, "§3C§9S §8> §eCreate - " + (index + 1));
+
+        p.openInventory(inv);
+    }
+
+    public void createScanMenu(int index)
+    {
+        Player p = Bukkit.getPlayer(u);
+
+        Inventory inv = createBaseInv(index, p, "§3C§9S §8> §aScan - " + (index + 1));
+        p.openInventory(inv);
+    }
+
+    private Inventory createCreateInv(int index, Player p, String name)
+    {
+        inv = Bukkit.createInventory(p, 45, name);
 
         this.index = index;
         ItemStack left = new ItemStack(Material.SKULL_ITEM, 1, (byte) 3);
@@ -316,36 +285,29 @@ public class CommandMenu
         inv.setItem(44, sep);
 
         //System.out.println("INDEX IS: " + index);
-        List<String> schematics = new ArrayList<>();
-        for(String file : new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics").list())
-        {
-            if(file.endsWith(".schematic") && !file.replaceAll("\\d+.*", "#").contains("-#_#_#"))
-            {
-                schematics.add(file);
-            }
-        }
-
+        String[] files = new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics").list();
         for (int i = 35 * index; i < (index > 0 ? 35 * index * 2 : 35); i++)
         {
-            if (schematics.size() > i)
+            if (files.length > i)
             {
-                String site = schematics.get(i);
+                String site = files[i];
+                boolean cb = !site.matches("(.*)_\\d+-\\d+-\\d+(.*)") && site.endsWith(".schematic") && !plugin.getConfig().contains("CS." + site.substring(0, site.lastIndexOf(".")).toLowerCase());
                 //plugin.getLogger().info("TESTING FOR " + site + ": " + cb);
+                if (cb)
+                {
+                    ItemStack cs = new ItemStack(Material.EMPTY_MAP);
+                    ItemMeta cm = cs.getItemMeta();
 
-                ItemStack cs = new ItemStack(Material.SIGN);
-                ItemMeta cm = cs.getItemMeta();
+                    cm.setDisplayName("§9" + WordUtils.capitalizeFully(site));
+                    cs.setItemMeta(cm);
 
-                cm.setDisplayName("§9" + WordUtils.capitalizeFully(site));
-                List<String> lore = new ArrayList<>();
-                lore.add("§6§lDuration: §e" + plugin.getConfig().getString("CS." + site + ".Time"));
-                lore.add("§6§lCost: §a$" + plugin.getConfig().getString("CS." + site + ".Cost"));
-                cm.setLore(lore);
-                cs.setItemMeta(cm);
 
-                inv.addItem(cs);
+                    inv.addItem(cs);
+                }
             }
         }
-        p.openInventory(inv);
+
+        return inv;
     }
 
     public enum ItemType

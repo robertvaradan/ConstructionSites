@@ -8,13 +8,12 @@ CS:
       Enabled: true
       Timeout: 100
     Pasting:
-    # The X, Y, Z scan offsets. In this example, the borders of the building must be at least two blocks away from any no-build WorldGuard regions for the site to be built.
+    # The X, Y, Z scan offsets. In this example, the borders of the building must be at least two blocks away from
+    # any no-build WorldGuard regions for the site to be built.
     Offset:
       X: 2.0
       Y: 2.0
       Z: 2.0
-  # The names of the sites you add with /con admin addsite. This line will not appear in your config initially. The four listed names are only examples.
-  Names: []
   # The details for each site are below. These are also auto-generated when you add the sites.
   # And a list of unfinished processes are below. Don't tamper with these.
 Processes: []

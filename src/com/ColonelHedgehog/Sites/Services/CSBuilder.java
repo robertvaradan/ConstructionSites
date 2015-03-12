@@ -4,7 +4,6 @@ import com.ColonelHedgehog.Sites.Core.Prefs;
 import com.sk89q.worldedit.*;
 import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
-import com.sk89q.worldedit.data.DataException;
 import com.sk89q.worldedit.schematic.SchematicFormat;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -16,8 +15,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 
 import static com.ColonelHedgehog.Sites.Commands.ConstructCmd.locationCanBuild;
 import static com.ColonelHedgehog.Sites.Commands.ConstructCmd.scanForArea;
@@ -147,11 +145,9 @@ public class CSBuilder
      * @param saveFile a File representing the schematic file to create
      * @param l1       one corner of the region to save
      * @param l2       the corner of the region to save, opposite to l1
-     * @throws com.sk89q.worldedit.FilenameException
-     * @throws DataException
      * @throws IOException
      */
-    public void saveTerrain(File saveFile, Location l1, Location l2) throws FilenameException, DataException, IOException
+    public void saveTerrain(File saveFile, Location l1, Location l2) throws Exception
     {
         Vector min = getMin(l1, l2);
         Vector max = getMax(l1, l2);
@@ -173,38 +169,37 @@ public class CSBuilder
      *
      * @param saveFile a File representing the schematic file to load
      * @param loc      the location to paste the clipboard at (may be null)
-     * @throws FilenameException
-     * @throws DataException
      * @throws IOException
      * @throws MaxChangedBlocksException
      * @throws EmptyClipboardException
      */
-    public boolean loadSchematic(File saveFile, Location loc, Player p, int rotation, boolean noair) throws FilenameException, DataException, IOException, MaxChangedBlocksException, EmptyClipboardException
+    public boolean loadSchematic(File saveFile, Location loc, Player p, int rotation, boolean noair) throws Exception
     {
         saveFile = we.getSafeSaveFile(localPlayer,
                 saveFile.getParentFile(), saveFile.getName(),
                 EXTENSION,
                 EXTENSION);
 
-        editSession.enableQueue();
-        localSession.setClipboard(SchematicFormat.MCEDIT.load(saveFile));
+        EditSession es = new EditSession(new BukkitWorld(loc.getWorld()), Integer.MAX_VALUE);
+        //es.enableQueue();
+        CuboidClipboard cc = SchematicFormat.MCEDIT.load(saveFile);
         boolean resolved = false;
         //Bukkit.broadcastMessage("Rotation is: " + rotation);
-        localSession.getClipboard().rotate2D(rotation);
+        cc.rotate2D(rotation);
 
 
         //p.sendMessage("DEBUG ROTATION: " + rotation);
-        localSession.getClipboard().setOffset(new Vector(0, localSession.getClipboard().getHeight() / 2, 0));
-        localSession.getClipboard().setOrigin(new Vector(loc.getBlockX(), loc.getBlockY() / 2, loc.getBlockZ()));
+        cc.setOffset(new Vector(0, cc.getHeight() / 2, 0));
+        cc.setOrigin(new Vector(loc.getBlockX(), loc.getBlockY() / 2, loc.getBlockZ()));
 
-        int x = (localSession.getClipboard().getWidth() + 1) / 2;
-        int y = (localSession.getClipboard().getHeight() + 1) / 2;
-        int z = (localSession.getClipboard().getLength() + 1) / 2;
+        int x = (cc.getWidth() + 1) / 2;
+        int y = (cc.getHeight() + 1) / 2;
+        int z = (cc.getLength() + 1) / 2;
 
         for (Location newloc : scanForArea(loc.getBlock().getLocation(), x, y, z,
-                Prefs.bsox + localSession.getClipboard().getOffset().getBlockX(),
-                Prefs.bsoy + localSession.getClipboard().getOffset().getBlockY(),
-                Prefs.bsoz + localSession.getClipboard().getOffset().getBlockZ()))
+                Prefs.bsox + cc.getOffset().getBlockX(),
+                Prefs.bsoy + cc.getOffset().getBlockY(),
+                Prefs.bsoz + cc.getOffset().getBlockZ()))
         {
             //p.sendMessage("§7DEBUG: §aScanning area: §6" + loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ() + ".");
             if (p != null && !locationCanBuild(newloc, p))
@@ -216,24 +211,22 @@ public class CSBuilder
 
         }
 
-        localSession.getClipboard().place(editSession, new Vector(loc.getBlockX() - (localSession.getClipboard().getWidth() / 2), loc.getBlockY(), (loc.getBlockZ() - localSession.getClipboard().getLength() / 2)), noair);
+        cc.place(es, new Vector(loc.getBlockX() - (cc.getWidth() / 2), loc.getBlockY(), (loc.getBlockZ() - cc.getLength() / 2)), noair);
 
-        editSession.flushQueue();
+        //es.flushQueue();
 
-        we.flushBlockBag(localPlayer, editSession);
+        we.flushBlockBag(localPlayer, es);
         return true;
     }
 
     /**
      * Load the data from the given schematic file and paste it at the saved clipboard's origin.
      *
-     * @throws FilenameException
-     * @throws DataException
      * @throws IOException
      * @throws MaxChangedBlocksException
      * @throws EmptyClipboardException
      */
-    public void loadSchematic(File saveFile) throws FilenameException, DataException, IOException, MaxChangedBlocksException, EmptyClipboardException
+    public void loadSchematic(File saveFile) throws Exception
     {
         loadSchematic(saveFile, null, null, 0, true);
     }
@@ -241,7 +234,7 @@ public class CSBuilder
     private Vector getPastePosition(Location loc) throws EmptyClipboardException
     {
         /*if (loc == null)
-			return localSession.getClipboard().getOrigin();
+			return cc.getOrigin();
 		else */
         return new Vector(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
     }
@@ -264,7 +257,7 @@ public class CSBuilder
         );
     }
 
-    public boolean testLoadSchematic(File saveFile, final Location loc, Player p, int rotation, boolean placetest) throws FilenameException, DataException, IOException, MaxChangedBlocksException, EmptyClipboardException
+    public boolean testLoadSchematic(File saveFile, final Location loc, Player p, int rotation, boolean placetest) throws Exception
     {
         boolean tr = true;
         saveFile = we.getSafeSaveFile(localPlayer,
@@ -272,38 +265,28 @@ public class CSBuilder
                 EXTENSION,
                 EXTENSION);
 
-        editSession.enableQueue();
-        localSession.setClipboard(SchematicFormat.MCEDIT.load(saveFile));
-        localSession.getClipboard().rotate2D(rotation);
+        EditSession es = new EditSession(new BukkitWorld(loc.getWorld()), Integer.MAX_VALUE);
+        //es.enableQueue();
+        CuboidClipboard cc = SchematicFormat.MCEDIT.load(saveFile);
+
+        cc.rotate2D(rotation);
 
 
         //p.sendMessage("DEBUG ROTATION: " + rotation);
-        localSession.getClipboard().setOffset(new Vector(0, localSession.getClipboard().getHeight() / 2, 0));
-        localSession.getClipboard().setOrigin(new Vector(loc.getBlockX(), loc.getBlockY() / 2, loc.getBlockZ()));
+        cc.setOffset(new Vector(0, cc.getHeight() / 2, 0));
+        cc.setOrigin(new Vector(loc.getBlockX(), loc.getBlockY() / 2, loc.getBlockZ()));
 
-        int x = (localSession.getClipboard().getWidth() + 1) / 2;
-        int y = (localSession.getClipboard().getHeight() + 1) / 2;
-        int z = (localSession.getClipboard().getLength() + 1) / 2;
-
-        int use = x;
-
-        if (y > x && y > z)
-        {
-            use = y;
-        }
-
-        if (z > y && z > x)
-        {
-            use = z;
-        }
+        int x = (cc.getWidth() + 1) / 2;
+        int y = (cc.getHeight() + 1) / 2;
+        int z = (cc.getLength() + 1) / 2;
 
         boolean v = Prefs.ve;
-        final List<Location> resolver = new ArrayList<>();
+        final HashSet<Location> resolver = new HashSet<>();
 
-        for (Location newloc : scanForArea(loc.getBlock().getLocation(), use, use / 2, use,
-                Prefs.bsox + localSession.getClipboard().getOffset().getBlockX(),
-                Prefs.bsoy + localSession.getClipboard().getOffset().getBlockY(),
-                Prefs.bsoz + localSession.getClipboard().getOffset().getBlockZ()))
+        for (Location newloc : scanForArea(loc.getBlock().getLocation(), x, y, z,
+                Prefs.bsox + cc.getOffset().getBlockX(),
+                Prefs.bsoy + cc.getOffset().getBlockY(),
+                Prefs.bsoz + cc.getOffset().getBlockZ()))
         {
             //p.sendMessage("§7DEBUG: §aScanning area: §6" + loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ() + ".");
             if (!locationCanBuild(newloc, p))
@@ -311,7 +294,9 @@ public class CSBuilder
                 tr = false;
             }
 
-            if (Math.abs(loc.getBlockX() - newloc.getBlockX()) == use || Math.abs(loc.getBlockY() - newloc.getBlockY()) == use || Math.abs(loc.getBlockZ() - newloc.getBlockZ()) == use)
+            int ny = (y * 2) + Prefs.bsoy;
+
+            if (Math.abs(loc.getBlockX() - newloc.getBlockX()) == x + Prefs.bsox || Math.abs(loc.getBlockY() - newloc.getBlockY()) == (ny % 2 == 0 ? ny : ny + (ny < 0 ? -1 : 1)) || Math.abs(loc.getBlockZ() - newloc.getBlockZ()) == z + Prefs.bsoz)
             {
                 if (locationCanBuild(newloc, p) && v)
                 {
@@ -333,18 +318,15 @@ public class CSBuilder
             {
                 for (Location r : resolver)
                 {
-                    int eic = 0;
-
-
                     BlockState state = r.getBlock().getState();
                     state.update(true);
                 }
             }
         }.runTaskLater(plugin, Prefs.vto);
 
-        editSession.flushQueue();
+        //es.flushQueue();
 
-        we.flushBlockBag(localPlayer, editSession);
+        we.flushBlockBag(localPlayer, es);
 
         return tr;
     }

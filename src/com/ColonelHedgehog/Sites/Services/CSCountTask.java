@@ -3,11 +3,7 @@ package com.ColonelHedgehog.Sites.Services;
 
 import com.ColonelHedgehog.CSAPI.Events.SiteCompleteEvent;
 import com.ColonelHedgehog.CSAPI.Events.SiteFinishEvent;
-import com.sk89q.worldedit.EmptyClipboardException;
-import com.sk89q.worldedit.FilenameException;
-import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
-import com.sk89q.worldedit.data.DataException;
 import org.bukkit.*;
 import org.bukkit.FireworkEffect.Builder;
 import org.bukkit.FireworkEffect.Type;
@@ -21,7 +17,6 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -80,7 +75,7 @@ public class CSCountTask extends BukkitRunnable
                         tm.loadSchematic(file, signloc, p, (int) CSBuilder.getFaceYaw(((Directional) s.getData()).getFacing().getOppositeFace()), true);
                     }
                 }
-                catch (IOException | DataException | FilenameException | MaxChangedBlocksException | EmptyClipboardException ex)
+                catch (Exception ex)
                 {
                     Logger.getLogger(CSCountTask.class.getName()).log(Level.SEVERE, null, ex);
                 }

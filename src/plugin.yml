@@ -1,5 +1,5 @@
 name: ConstructionSites
-version: 0.9
+version: 1.4
 main: com.ColonelHedgehog.Sites.Core.ConstructionSites
 description: Used to create sites & creations from WorldEdit schematics.
 depend: [WorldEdit, WorldGuard, Vault]

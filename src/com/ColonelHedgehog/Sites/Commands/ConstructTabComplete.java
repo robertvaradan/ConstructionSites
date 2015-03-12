@@ -15,6 +15,7 @@ import org.bukkit.entity.Player;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  *
@@ -35,11 +36,10 @@ public class ConstructTabComplete implements TabCompleter
             {
                 Player p = (Player) sender;
 
-                List<String> list =  plugin.getConfig().getStringList("CS.Names");
-                if(list == null)
-                {
-                    list = new ArrayList<>();
-                }
+                Set<String> list = plugin.getConfig().getConfigurationSection("CS").getKeys(false);
+                list.remove("Prefs");
+                list.remove("Names");
+
                 
                 List<String> newList = new ArrayList<>();
                 

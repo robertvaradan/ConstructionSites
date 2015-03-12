@@ -12,7 +12,6 @@ import com.ColonelHedgehog.Sites.Events.InventoryClick;
 import com.ColonelHedgehog.Sites.Events.PlayerCommandPreProcess;
 import com.ColonelHedgehog.Sites.Events.PlayerInteract;
 import com.ColonelHedgehog.Sites.Services.URLServices.DLC;
-import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
@@ -48,9 +47,9 @@ public class ConstructionSites extends JavaPlugin
         plugin.getServer().getPluginManager().registerEvents(new PlayerCommandPreProcess(), this);
         plugin.getServer().getPluginManager().registerEvents(new InventoryClick(), this);
 
-        if (!PluginServices.isInstalled("WorldEdit") || !PluginServices.isInstalled("WorldGuard") || !PluginServices.isInstalled("Vault"))
+        if (!PluginServices.isInstalled("WorldEdit") || !PluginServices.isInstalled("Vault"))
         {
-            System.out.println("[ConstructionSites] PLUGIN BREAK! Not all necessary plugins were found. WorldEdit: " + PluginServices.isInstalled("WorldEdit") + ". WorldGuard: " + PluginServices.isInstalled("WorldGuard") + ". Vault: " + PluginServices.isInstalled("Vault"));
+           getLogger().severe("PLUGIN BREAK! Not all necessary plugins were found. WorldEdit: " + PluginServices.isInstalled("WorldEdit") + ". Vault: " + PluginServices.isInstalled("Vault"));
             plugin.setEnabled(false);
         }
 
@@ -67,18 +66,6 @@ public class ConstructionSites extends JavaPlugin
 
     }
 
-    public static WorldGuardPlugin getWorldGuard()
-    {
-        Plugin wgplugin = plugin.getServer().getPluginManager().getPlugin("WorldGuard");
-        // WorldGuard may not be loaded
-        if (wgplugin == null || !(wgplugin instanceof WorldGuardPlugin))
-        {
-            return null; // Maybe you want throw an exception instead
-        }
-
-        return (WorldGuardPlugin) wgplugin;
-    }
-
     private boolean setupEconomy()
     {
         RegisteredServiceProvider<Economy> economyProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
@@ -92,6 +79,11 @@ public class ConstructionSites extends JavaPlugin
 
     private void startupPackInstall()
     {
+
+        if(new File(plugin.getDataFolder().getParent()).listFiles() == null)
+        {
+            return;
+        }
 
         for (File pack : new File(plugin.getDataFolder().getParent()).listFiles())
         {

@@ -7,14 +7,12 @@ import com.ColonelHedgehog.Sites.Services.BuildSounds;
 import com.ColonelHedgehog.Sites.Services.BuildSounds.BuildSound;
 import com.ColonelHedgehog.Sites.Services.CSBuilder;
 import com.ColonelHedgehog.Sites.Services.CSTime;
-import com.sk89q.worldedit.EmptyClipboardException;
-import com.sk89q.worldedit.FilenameException;
-import com.sk89q.worldedit.MaxChangedBlocksException;
+import com.sk89q.worldedit.blocks.BlockType;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
-import com.sk89q.worldedit.data.DataException;
-import com.sk89q.worldguard.bukkit.BukkitUtil;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
@@ -25,7 +23,6 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.material.Directional;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -36,53 +33,62 @@ public class PlayerInteract implements Listener
 {
 
     private static ConstructionSites plugin = ConstructionSites.plugin;
+
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event)
     {
-        if(event.getAction() == Action.RIGHT_CLICK_BLOCK)
+        if (event.getAction() == Action.RIGHT_CLICK_BLOCK)
         {
             Block clicked = event.getClickedBlock();
-            
-            if(clicked.getType() == Material.SIGN || clicked.getType() == Material.WALL_SIGN || clicked.getType() == Material.SIGN_POST)
+
+            if (clicked.getType() == Material.SIGN || clicked.getType() == Material.WALL_SIGN || clicked.getType() == Material.SIGN_POST)
             {
                 Sign sign = (Sign) clicked.getState();
                 String line0 = sign.getLine(0).replace("§0", "");
                 String line1 = sign.getLine(1).replace("§0", "");
                 String line2 = sign.getLine(2).replace("§0", "");
                 String line3 = sign.getLine(3).replace("§0", "");
-                
+
                 if (line0.equals("§1[Construct]"))
                 {
                     Player p = event.getPlayer();
                     boolean Continue = true;
                     double cost = 0;
-                    try{cost = Double.parseDouble(line2.replace("§b$", ""));}
-                    catch(NumberFormatException nfe){p.sendMessage(Prefix + "§4CRITICAL ERROR: §cYour admin did not set up the price correctly! Report this to him immediately."); Continue = false;}
-                            
-                    if(line1.equals("§aCompleted") && Continue)
+                    try
                     {
-                        if(ConstructionSites.economy.getBalance(p) >= cost)
+                        cost = Double.parseDouble(line2.replace("§b$", ""));
+                    }
+                    catch (NumberFormatException nfe)
+                    {
+                        p.sendMessage(Prefix + "§4CRITICAL ERROR: §cYour admin did not set up the price correctly! Report this to him immediately.");
+                        Continue = false;
+                    }
+
+                    if (line1.equals("§aCompleted") && Continue)
+                    {
+                        if (ConstructionSites.economy.getBalance(p) >= cost)
                         {
-                            
+
                             File file = new File(plugin.getDataFolder().getParent() + "/WorldEdit/schematics/" + line3.replace("§0", "") + ".schematic");
-                            if(!file.exists())
+                            if (!file.exists())
                             {
                                 p.sendMessage(ConstructionSites.Prefix + "§4FATAL: §cCouldn't construct site from file, because no file could be found. It was likely deleted... or it never even existed in the first place.");
                                 return;
                             }
                             //Vector vector = new Vector(p.getLocation().getBlockX(), p.getLocation().getBlockY(), p.getLocation().getBlockZ());
-                                try {
-                                    WorldEditPlugin wep = (WorldEditPlugin)Bukkit.getPluginManager().getPlugin("WorldEdit");
-                                    CSBuilder testtm = new CSBuilder(wep, p);
-                                        boolean test = testtm.testLoadSchematic(file, event.getClickedBlock().getLocation(), p, (int) CSBuilder.getFaceYaw(((Directional) sign.getData()).getFacing().getOppositeFace()), false);
-                                        if(test)
-                                        {
-                                        CSBuilder tm = new CSBuilder(wep, p);
-                                        boolean loadschematic = tm.loadSchematic(file, event.getClickedBlock().getLocation(), p, (int) CSBuilder.getFaceYaw(((Directional) sign.getData()).getFacing().getOppositeFace()), false);
-                                        //Bukkit.broadcastMessage("Rotation is: " + TerrainManager.getPlayerDirection(event.getClickedBlock().getLocation()) + " and " + TerrainManager.getFaceYaw(((Directional) sign).getFacing().getOppositeFace()));
+                            try
+                            {
+                                WorldEditPlugin wep = (WorldEditPlugin) Bukkit.getPluginManager().getPlugin("WorldEdit");
+                                CSBuilder testtm = new CSBuilder(wep, p);
+                                boolean test = testtm.testLoadSchematic(file, event.getClickedBlock().getLocation(), p, (int) CSBuilder.getFaceYaw(((Directional) sign.getData()).getFacing().getOppositeFace()), false);
+                                if (test)
+                                {
+                                    CSBuilder tm = new CSBuilder(wep, p);
+                                    boolean loadschematic = tm.loadSchematic(file, event.getClickedBlock().getLocation(), p, (int) CSBuilder.getFaceYaw(((Directional) sign.getData()).getFacing().getOppositeFace()), false);
+                                    //Bukkit.broadcastMessage("Rotation is: " + TerrainManager.getPlayerDirection(event.getClickedBlock().getLocation()) + " and " + TerrainManager.getFaceYaw(((Directional) sign).getFacing().getOppositeFace()));
 
-                                        if(loadschematic)
-                                        {
+                                    if (loadschematic)
+                                    {
                                         ConstructionSites.economy.withdrawPlayer(p, cost);
                                         p.sendMessage(Prefix + "§eBuild cost: $" + cost + ". Returned: " + cost * Prefs.ac + ". "
                                                 + "Total due: §e$" + (cost - cost * Prefs.ac) + "§e.");
@@ -91,16 +97,18 @@ public class PlayerInteract implements Listener
                                         //event.getClickedBlock().breakNaturally();
                                         BuildSounds.playBuildSound(BuildSounds.BuildSound.SITE_BUILT, p.getLocation(), null);
 
-                                        BukkitUtil.findFreePosition(p);
+                                        findFreePosition(p);
 
                                         sign.setLine(0, "§c[Construct]");
 
                                         BuildSounds.playBuildSound(BuildSound.SITE_BUILT, p.getLocation(), null);
-                                        }
                                     }
-                                    } catch (FilenameException | DataException | IOException | MaxChangedBlocksException | EmptyClipboardException ex) {
-                                    Logger.getLogger(ConstructCmd.class.getName()).log(Level.SEVERE, null, ex);
                                 }
+                            }
+                            catch (Exception ex)
+                            {
+                                Logger.getLogger(ConstructCmd.class.getName()).log(Level.SEVERE, null, ex);
+                            }
                             BuildSounds.playBuildSound(BuildSound.SITE_BUILT, p.getLocation(), null);
 
                         }
@@ -109,13 +117,13 @@ public class PlayerInteract implements Listener
                             p.sendMessage(Prefix + "§4Insufficient funds. §6You need §a$" + cost + " §6to complete this building. Your balance is §a$" + economy.getBalance(p) + "§6.");
                         }
                     }
-                    else if(!line1.equals("§aCompleted"))
+                    else if (!line1.equals("§aCompleted"))
                     {
                         //now.getTime() returns the Unix-Timestamp.
 
                         //format the output to "24-01-2012 15:19:45"
                         String strang = CSTime.getMsgsafeTime(line1.replace("§b", ""));
-                        if(strang.endsWith(" "))
+                        if (strang.endsWith(" "))
                         {
                             strang = strang.substring(0, (strang.length() - 1));
                         }
@@ -131,4 +139,50 @@ public class PlayerInteract implements Listener
 
         }
     }
+
+    @SuppressWarnings("deprecation")
+    private void findFreePosition(Player player)
+    {
+        Location loc = player.getLocation();
+        int x = loc.getBlockX();
+        int y = Math.max(0, loc.getBlockY());
+        int origY = y;
+        int z = loc.getBlockZ();
+        World world = player.getWorld();
+
+        byte free = 0;
+
+        while (y <= 129)
+        {
+            if (BlockType.canPassThrough(world.getBlockTypeIdAt(x, y, z)))
+            {
+                free++;
+            }
+            else
+            {
+                free = 0;
+            }
+
+            if (free == 2)
+            {
+                if (y - 1 != origY || y == 1)
+                {
+                    loc.setX(x + 0.5);
+                    loc.setY(y);
+                    loc.setZ(z + 0.5);
+                    if (y <= 2 && world.getBlockAt(x, 0, z).getType() == Material.AIR)
+                    {
+                        world.getBlockAt(x, 0, z).setTypeId(20);
+                        loc.setY(2);
+                    }
+//                    player.setFallDistance(0F);
+                    player.teleport(loc);
+                }
+                return;
+            }
+
+            y++;
+        }
+    }
+
 }
